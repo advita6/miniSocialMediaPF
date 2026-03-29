@@ -4,9 +4,9 @@ const app = express();
 
 app.use(express.json());   
 
-const authRoutes = require("./Routes/authRoutes");
-const postRoutes = require("./Routes/postRoutes");
-const connectDB = require("./Config/db");
+const authRoutes = require("./api/authRoutes");
+const postRoutes = require("./api/postRoutes");
+const connectDB = require("./setup/db");
 
 connectDB();
 
