@@ -3,7 +3,12 @@ const Post = require("../Models/Post");
 exports.createPost = async (req, res) => {
   const { userId, content } = req.body;
 
-  const post = new Post({ userId, content });
+  let imageUrl = null;
+  if (req.file) {
+    imageUrl = `/uploads/${req.file.filename}`;
+  }
+
+  const post = new Post({ userId, content, image: imageUrl });
   await post.save();
 
   res.json(post);

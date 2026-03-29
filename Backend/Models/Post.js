@@ -6,6 +6,7 @@ const postSchema = new mongoose.Schema({
     ref: "User"
   },
   content: String,
+  image: String,
   createdAt: {
     type: Date,
     default: Date.now
