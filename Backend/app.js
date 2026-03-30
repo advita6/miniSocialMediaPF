@@ -1,21 +1,34 @@
 const express = require("express");
 const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config();
+
 const app = express();
 
-app.use(express.json());   
+app.use(express.json());
 
-const authRoutes = require("./api/authRoutes");
-const postRoutes = require("./api/postRoutes");
-const connectDB = require("./setup/db");
-
+const connectDB = require("./Database/connection");
 connectDB();
 
-app.use("/api/auth", authRoutes);  
+const authRoutes = require("./Routes/authRoutes");
+const postRoutes = require("./Routes/postRoutes");
+
+app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
   res.send("API running");
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+app.use((err, req, res, next) => {
+  res.status(500).json({ message: "Server Error" });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
