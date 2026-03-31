@@ -1,4 +1,4 @@
-const User = require("../Models/User");
+const User = require("../data/User");
 
 // SIGNUP
 exports.signup = async (req, res) => {
