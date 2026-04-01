@@ -1,0 +1,18 @@
+{
+  "name": "fullstackminiproj",
+  "version": "1.0.0",
+  "main": "Backend/app.js",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd Backend && node app.js",
+    "frontend": "cd Frontend && npm run dev"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
