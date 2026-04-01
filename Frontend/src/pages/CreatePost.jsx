@@ -8,6 +8,7 @@ export default function CreatePost() {
   const [caption, setCaption] = useState("");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // 📸 Handle Image Upload
   const handleImage = (e) => {
@@ -25,30 +26,48 @@ export default function CreatePost() {
   };
 
   // 🚀 Handle Post
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!caption && !image) {
       alert("Add something to post!");
       return;
     }
 
-    const newPost = {
-      caption,
-      image: preview,
-      user: "You",
-      id: Date.now()
-    };
+    setLoading(true);
 
-    console.log("Posted:", newPost);
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
 
-    alert("Post created 🚀");
+      const formData = new FormData();
+      formData.append("content", caption);
+      if (user) formData.append("userId", user._id);
+      if (image) formData.append("image", image);
 
-    // Reset
-    setCaption("");
-    setImage(null);
-    setPreview(null);
+      const res = await fetch("/api/posts/create", {
+        method: "POST",
+        body: formData
+      });
 
-    // Redirect
-    navigate("/");
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Failed to create post");
+        return;
+      }
+
+      alert("Post created 🚀");
+
+      // Reset
+      setCaption("");
+      setImage(null);
+      setPreview(null);
+
+      // Redirect
+      navigate("/");
+    } catch (err) {
+      alert("Server error. Is the backend running?");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -109,9 +128,10 @@ export default function CreatePost() {
 
           <button
             onClick={handlePost}
-            className="bg-blue-500 px-5 py-2 rounded-lg font-semibold hover:bg-blue-600 transition"
+            disabled={loading}
+            className="bg-blue-500 px-5 py-2 rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50"
           >
-            Post 🚀
+            {loading ? "Posting..." : "Post 🚀"}
           </button>
         </div>
 

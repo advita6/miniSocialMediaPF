@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError("");
 
     if (!email || !password) {
@@ -17,10 +20,29 @@ export default function Login() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(data));
       alert("Login successful 🚀");
-    }, 1500);
+      navigate("/");
+    } catch (err) {
+      setError("Server error. Is the backend running?");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,7 +92,7 @@ export default function Login() {
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-500 transition flex justify-center"
+          className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-500 transition flex justify-center disabled:opacity-50"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
@@ -78,9 +100,9 @@ export default function Login() {
         {/* Footer */}
         <p className="text-sm text-center mt-4 text-zinc-400">
           Don't have an account?{" "}
-          <span className="text-blue-400 cursor-pointer">
+          <Link to="/signup" className="text-blue-400 hover:underline cursor-pointer">
             Sign up
-          </span>
+          </Link>
         </p>
       </div>
     </div>

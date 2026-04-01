@@ -6,31 +6,53 @@ export default function Signup() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    username: "",
+    name: "",
     email: "",
     password: ""
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
+    setError("");
 
-    // 🔥 Simple validation
-    if (!form.username || !form.email || !form.password) {
-      alert("All fields are required");
+    if (!form.name || !form.email || !form.password) {
+      setError("All fields are required");
       return;
     }
 
-    // Fake signup (store locally)
-    localStorage.setItem("user", JSON.stringify(form));
+    setLoading(true);
 
-    alert("Signup successful 🚀");
-    navigate("/login");
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Signup failed");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(data));
+      alert("Signup successful 🚀");
+      navigate("/login");
+    } catch (err) {
+      setError("Server error. Is the backend running?");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,13 +71,13 @@ export default function Signup() {
 
         <form onSubmit={handleSignup} className="space-y-5">
           
-          {/* Username */}
+          {/* Name */}
           <div>
             <input
               type="text"
-              name="username"
-              placeholder="Username"
-              value={form.username}
+              name="name"
+              placeholder="Full Name"
+              value={form.name}
               onChange={handleChange}
               className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-blue-500"
             />
@@ -92,12 +114,18 @@ export default function Signup() {
             </span>
           </div>
 
+          {/* Error */}
+          {error && (
+            <p className="text-red-500 text-sm">{error}</p>
+          )}
+
           {/* Button */}
           <button
             type="submit"
-            className="w-full bg-blue-500 py-3 rounded-lg font-semibold hover:bg-blue-600 transition"
+            disabled={loading}
+            className="w-full bg-blue-500 py-3 rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50"
           >
-            Sign Up
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
 
         </form>
