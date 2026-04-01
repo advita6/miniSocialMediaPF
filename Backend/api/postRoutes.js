@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { createPost, getPosts } = require("../logic/postController");
+const { createPost, getPosts, addComment } = require("../logic/postController");
 
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -22,5 +22,6 @@ const upload = multer({ storage: storage });
 
 router.post("/create", upload.single("image"), createPost);
 router.get("/", getPosts);
+router.post("/:id/comment", addComment);
 
 module.exports = router;
