@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.local
+*.log
+package-lock.json
+Frontend/node_modules/
+Backend/node_modules/
+Backend/uploads/*
+!Backend/uploads/.gitkeep
