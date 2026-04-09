@@ -48,3 +48,28 @@ exports.addComment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.toggleLike = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Toggle logic
+    const hasLiked = post.likes.includes(userId);
+    if (hasLiked) {
+      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+    } else {
+      post.likes.push(userId);
+    }
+
+    await post.save();
+    res.json(post);
+  } catch (error) {
+    console.error("Toggle like error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -36,7 +36,6 @@ export default function Login() {
       }
 
       localStorage.setItem("user", JSON.stringify(data));
-      alert("Login successful 🚀");
       navigate("/");
     } catch (err) {
       setError("Server error. Is the backend running?");

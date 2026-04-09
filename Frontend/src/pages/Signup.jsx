@@ -46,8 +46,8 @@ export default function Signup() {
       }
 
       localStorage.setItem("user", JSON.stringify(data));
-      alert("Signup successful 🚀");
-      navigate("/login");
+      // Optionally redirect to home instead of login since they are now authed, or stay on login
+      navigate("/");
     } catch (err) {
       setError("Server error. Is the backend running?");
     } finally {

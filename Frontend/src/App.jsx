@@ -1,12 +1,27 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Navbar from "./components/Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import CreatePost from "./pages/CreatePost.jsx";
+import Profile from "./pages/Profile.jsx";
+import Settings from "./pages/Settings.jsx";
 // ❌ Removed ChatRoom import
 import { AnimatePresence, motion } from "framer-motion";
+
+// 🔥 Route Protectors
+const ProtectedRoute = ({ children }) => {
+  const user = localStorage.getItem("user");
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
+
+const AuthRoute = ({ children }) => {
+  const user = localStorage.getItem("user");
+  if (user) return <Navigate to="/" replace />;
+  return children;
+};
 
 // 🔥 Scroll to top on route change
 function ScrollToTop() {
@@ -35,6 +50,7 @@ const PageWrapper = ({ children }) => {
 
 function AppContent() {
   const location = useLocation();
+  const isAuthenticated = !!localStorage.getItem("user");
 
   return (
     <div className="bg-zinc-950 min-h-screen text-white">
@@ -42,9 +58,11 @@ function AppContent() {
       <ScrollToTop />
 
       {/* 🔥 Navbar */}
-      <div className="sticky top-0 z-50 backdrop-blur-lg bg-zinc-900/70 border-b border-zinc-800">
-        <Navbar />
-      </div>
+      {isAuthenticated && (
+        <div className="sticky top-0 z-50 backdrop-blur-lg bg-zinc-900/70 border-b border-zinc-800">
+          <Navbar />
+        </div>
+      )}
 
       {/* Page Content */}
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -54,36 +72,66 @@ function AppContent() {
             <Route
               path="/"
               element={
-                <PageWrapper>
-                  <Home />
-                </PageWrapper>
+                <ProtectedRoute>
+                  <PageWrapper>
+                    <Home />
+                  </PageWrapper>
+                </ProtectedRoute>
               }
             />
 
             <Route
               path="/login"
               element={
-                <PageWrapper>
-                  <Login />
-                </PageWrapper>
+                <AuthRoute>
+                  <PageWrapper>
+                    <Login />
+                  </PageWrapper>
+                </AuthRoute>
               }
             />
 
             <Route
               path="/signup"
               element={
-                <PageWrapper>
-                  <Signup />
-                </PageWrapper>
+                <AuthRoute>
+                  <PageWrapper>
+                    <Signup />
+                  </PageWrapper>
+                </AuthRoute>
               }
             />
 
             <Route
               path="/create"
               element={
-                <PageWrapper>
-                  <CreatePost />
-                </PageWrapper>
+                <ProtectedRoute>
+                  <PageWrapper>
+                    <CreatePost />
+                  </PageWrapper>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <PageWrapper>
+                    <Profile />
+                  </PageWrapper>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <PageWrapper>
+                    <Settings />
+                  </PageWrapper>
+                </ProtectedRoute>
               }
             />
 

@@ -3,16 +3,47 @@ import { motion } from "framer-motion";
 import { FaHeart, FaRegComment, FaPaperPlane } from "react-icons/fa";
 
 export default function PostCard({ post }) {
-  const [liked, setLiked] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user")) || null;
+  const [likes, setLikes] = useState(post.likes || []);
+  const [liked, setLiked] = useState(user ? (post.likes || []).includes(user._id) : false);
   const [showHeart, setShowHeart] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState(post.comments || []);
   const [loading, setLoading] = useState(false);
 
+  const toggleLocalLike = async () => {
+    if (!user) {
+      alert("Please login to like");
+      return;
+    }
+    
+    // Optimistic update
+    const isCurrentlyLiked = liked;
+    setLiked(!isCurrentlyLiked);
+    if (!isCurrentlyLiked) {
+      setLikes([...likes, user._id]);
+      setShowHeart(true);
+      setTimeout(() => setShowHeart(false), 800);
+    } else {
+      setLikes(likes.filter(id => id !== user._id));
+    }
+
+    try {
+      await fetch(`/api/posts/${post._id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user._id })
+      });
+    } catch (err) {
+      console.error("Like error:", err);
+      // Revert if failed
+      setLiked(isCurrentlyLiked);
+      setLikes(post.likes);
+    }
+  };
+
   const handleDoubleClick = () => {
-    setLiked(true);
-    setShowHeart(true);
-    setTimeout(() => setShowHeart(false), 800);
+    if (!liked) toggleLocalLike();
   };
 
   const handleAddComment = async (e) => {
@@ -81,12 +112,19 @@ export default function PostCard({ post }) {
       )}
 
       {/* Actions */}
-      <div className="p-4 flex gap-5 text-xl">
-        <FaHeart
-          className={`cursor-pointer transition-colors duration-200 ${liked ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
-          onClick={() => setLiked(!liked)}
-        />
-        <FaRegComment className="cursor-pointer text-zinc-400 hover:text-white transition-colors duration-200" />
+      <div className="p-4 flex flex-col gap-2">
+        <div className="flex gap-5 text-xl">
+          <FaHeart
+            className={`cursor-pointer transition-colors duration-200 ${liked ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
+            onClick={toggleLocalLike}
+          />
+          <FaRegComment className="cursor-pointer text-zinc-400 hover:text-white transition-colors duration-200" />
+        </div>
+        {likes.length > 0 && (
+          <div className="text-sm font-semibold text-zinc-200">
+            {likes.length} {likes.length === 1 ? "like" : "likes"}
+          </div>
+        )}
       </div>
 
       {/* Caption */}

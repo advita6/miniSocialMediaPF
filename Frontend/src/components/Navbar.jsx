@@ -11,7 +11,7 @@ export default function Navbar() {
   const userMenuRef = useRef(null);
   const notificationsRef = useRef(null);
 
-  const user = JSON.parse(localStorage.getItem("user")) || { name: "Guest", email: "guest@socialx.com" };
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const navItems = [
     { path: "/", icon: <FaHome />, label: "Home" },
@@ -117,7 +117,7 @@ export default function Navbar() {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className={`cursor-pointer transition flex items-center gap-2 p-1 pl-3 rounded-full border border-transparent ${showUserMenu ? "bg-zinc-800 border-zinc-700" : "hover:bg-zinc-800"}`}
           >
-            <span className="text-xs font-semibold text-zinc-300 hidden sm:block">{user.name}</span>
+            <span className="text-xs font-semibold text-zinc-300 hidden sm:block">{user?.name}</span>
             <FaUserCircle size={28} className={showUserMenu ? "text-blue-400" : "text-zinc-400"} />
           </div>
 
@@ -131,16 +131,22 @@ export default function Navbar() {
               >
                 {/* User Info */}
                 <div className="p-4 bg-zinc-800/30 border-b border-zinc-800">
-                  <p className="text-sm font-bold truncate text-white">{user.name}</p>
-                  <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+                  <p className="text-sm font-bold truncate text-white">{user?.name}</p>
+                  <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
                 </div>
 
                 {/* Options */}
                 <div className="p-2">
-                  <div className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition cursor-pointer">
+                  <div 
+                    onClick={() => { navigate("/profile"); setShowUserMenu(false); }}
+                    className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+                  >
                     <FaUser size={14} /> Profile
                   </div>
-                  <div className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition cursor-pointer">
+                  <div 
+                    onClick={() => { navigate("/settings"); setShowUserMenu(false); }}
+                    className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+                  >
                     <FaCog size={14} /> Settings
                   </div>
                   <div 
