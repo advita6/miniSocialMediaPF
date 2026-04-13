@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FaHeart, FaRegComment, FaPaperPlane } from "react-icons/fa";
+import { FaHeart, FaRegComment, FaPaperPlane, FaTrash } from "react-icons/fa";
 
 export default function PostCard({ post }) {
   const user = JSON.parse(localStorage.getItem("user")) || null;
@@ -10,6 +10,7 @@ export default function PostCard({ post }) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState(post.comments || []);
   const [loading, setLoading] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   const toggleLocalLike = async () => {
     if (!user) {
@@ -27,6 +28,9 @@ export default function PostCard({ post }) {
     } else {
       setLikes(likes.filter(id => id !== user._id));
     }
+
+    // Skip backend request if external API mock post
+    if (post.isExternal) return;
 
     try {
       await fetch(`/api/posts/${post._id}/like`, {
@@ -58,6 +62,14 @@ export default function PostCard({ post }) {
         return;
       }
 
+      // Simulate comment for external API mock posts
+      if (post.isExternal) {
+        setComments([...comments, { text: commentText, userId: user }]);
+        setCommentText("");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(`/api/posts/${post._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,15 +90,46 @@ export default function PostCard({ post }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const res = await fetch(`/api/posts/${post._id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${user?.token || ""}` }
+      });
+      
+      if (res.ok) {
+        setIsDeleted(true);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to delete post");
+      }
+    } catch (err) {
+      console.error("Failed to delete", err);
+    }
+  };
+
+  if (isDeleted) return null;
+
   return (
     <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden shadow-sm">
       
       {/* Header */}
-      <div className="p-4 font-semibold text-zinc-100 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs uppercase">
-          {post.userId?.name?.[0] || "?"}
+      <div className="p-4 font-semibold text-zinc-100 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs uppercase">
+            {post.userId?.name?.[0] || "?"}
+          </div>
+          {post.userId?.name || "Anonymous"}
         </div>
-        {post.userId?.name || "Anonymous"}
+        
+        {user && ((post.userId && post.userId._id === user._id) || user.isAdmin) && (
+          <button onClick={handleDelete} className="text-zinc-500 hover:text-red-500 transition">
+            <FaTrash size={16} />
+          </button>
+        )}
       </div>
 
       {/* Image */}

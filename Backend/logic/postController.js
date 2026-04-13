@@ -73,3 +73,25 @@ exports.toggleLike = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const isOwner = post.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user.isAdmin === true;
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Not authorized to delete this post" });
+    }
+
+    await Post.findByIdAndDelete(req.params.id);
+    res.json({ message: "Post deleted successfully", id: req.params.id });
+  } catch (error) {
+    console.error("Delete post error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

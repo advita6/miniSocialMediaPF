@@ -9,7 +9,8 @@ const {
     createPost, 
     getPosts, 
     addComment, 
-    toggleLike 
+    toggleLike,
+    deletePost
 } = require("../logic/postController");
 
 // Import the security middleware
@@ -54,5 +55,8 @@ router.post("/:id/comment", protect, addComment);
 
 // 4. Toggle Like: Protected
 router.post("/:id/like", protect, toggleLike);
+
+// 5. Delete Post: Protected (owner or admin)
+router.delete("/:id", protect, deletePost);
 
 module.exports = router;

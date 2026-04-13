@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaHome, FaPlusSquare, FaComments, FaBell, FaUserCircle, FaSignOutAlt, FaUser, FaCog } from "react-icons/fa";
+import { FaHome, FaPlusSquare, FaComments, FaBell, FaUserCircle, FaSignOutAlt, FaUser, FaCog, FaShieldAlt } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
@@ -149,6 +149,14 @@ export default function Navbar() {
                   >
                     <FaCog size={14} /> Settings
                   </div>
+                  {user?.isAdmin && (
+                    <div 
+                      onClick={() => { navigate("/admin"); setShowUserMenu(false); }}
+                      className="flex items-center gap-3 px-3 py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition cursor-pointer mt-1"
+                    >
+                      <FaShieldAlt size={14} /> Admin Panel
+                    </div>
+                  )}
                   <div 
                     onClick={handleLogout}
                     className="flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition cursor-pointer mt-1"

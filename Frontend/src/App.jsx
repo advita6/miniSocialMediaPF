@@ -7,6 +7,7 @@ import Signup from "./pages/Signup.jsx";
 import CreatePost from "./pages/CreatePost.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
+import Admin from "./pages/Admin.jsx";
 // ❌ Removed ChatRoom import
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -20,6 +21,12 @@ const ProtectedRoute = ({ children }) => {
 const AuthRoute = ({ children }) => {
   const user = localStorage.getItem("user");
   if (user) return <Navigate to="/" replace />;
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user || user.isAdmin !== true) return <Navigate to="/" replace />;
   return children;
 };
 
@@ -132,6 +139,17 @@ function AppContent() {
                     <Settings />
                   </PageWrapper>
                 </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <PageWrapper>
+                    <Admin />
+                  </PageWrapper>
+                </AdminRoute>
               }
             />
 

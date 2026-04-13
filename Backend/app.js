@@ -20,9 +20,11 @@ const startServer = async () => {
   
   const authRoutes = require("./api/authRoutes");
   const postRoutes = require("./api/postRoutes");
+  const adminRoutes = require("./api/adminRoutes");
 
   app.use("/api/auth", authRoutes);
   app.use("/api/posts", postRoutes);
+  app.use("/api/admin", adminRoutes);
 
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

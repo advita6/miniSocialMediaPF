@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Chat Room</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Abstract Background Elements -->
+    <div class="bg-shape bg-shape1"></div>
+    <div class="bg-shape bg-shape2"></div>
+    <div class="bg-shape bg-shape3"></div>
+
+    <div class="app-container">
+        <header class="chat-header glass">
+            <div class="header-info">
+                <h1>Anonymous Chat</h1>
+                <p class="status">Connected as: <span id="my-name" class="highlight">Connecting...</span></p>
+            </div>
+            <div class="header-visual">
+                <span class="pulse-dot"></span>
+                <span>Live</span>
+            </div>
+        </header>
+
+        <div class="chat-wrapper glass">
+            <div id="messages-container" class="messages">
+                <!-- Messages will be injected here -->
+            </div>
+            
+            <div id="reply-banner" class="reply-banner hidden">
+                <div class="reply-banner-content">
+                    <span class="replying-to-label">Replying to:</span>
+                    <span id="reply-target-text" class="reply-target-text"></span>
+                </div>
+                <button id="cancel-reply-btn" class="cancel-reply-btn" title="Cancel Reply">✕</button>
+            </div>
+
+            <form id="chat-form" class="chat-form">
+                <div class="input-wrapper">
+                    <!-- Emoji button can trigger OS emoji picker or custom if needed. We'll rely on text input right now. -->
+                    <input type="text" id="message-input" autocomplete="off" placeholder="Type a message (emojis supported)..." required maxlength="1000"/>
+                    <button type="submit" id="send-btn" class="send-btn">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Socket.IO library from the server -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

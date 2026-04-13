@@ -36,11 +36,32 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    let isMatch = false;
+
+    // Support both hashed passwords (new) and legacy plain text ones
+    if (user.password && (user.password.startsWith("$2b$") || user.password.startsWith("$2a$"))) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      isMatch = password === user.password;
+      
+      // Auto-migrate legacy user to hashed password on successful login
+      if (isMatch) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+      }
+    }
+
+    if (isMatch) {
       res.json({
         _id: user._id,
         name: user.name,
         token: generateToken(user._id),
+        isAdmin: user.isAdmin || false
       });
     } else {
       res.status(401).json({ message: "Invalid email or password" });
