@@ -3,27 +3,56 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { createPost, getPosts, addComment, toggleLike } = require("../logic/postController");
 
+// Import logic controllers
+const { 
+    createPost, 
+    getPosts, 
+    addComment, 
+    toggleLike 
+} = require("../logic/postController");
+
+// Import the security middleware
+const { protect } = require("../middleware/authMiddleware");
+
+// Ensure upload directory exists locally
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+    // Unique filename: Timestamp + Random Number + Original Extension
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage: storage });
 
-router.post("/create", upload.single("image"), createPost);
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // Limit: 5MB
+});
+
+/**
+ * ROUTES
+ */
+
+// 1. Create Post: Protected + Image Upload
+// Note: 'protect' must come before 'upload' to verify user identity first
+router.post("/create", protect, upload.single("image"), createPost);
+
+// 2. Get All Posts: Public (allows guests to see the feed)
 router.get("/", getPosts);
-router.post("/:id/comment", addComment);
 
-router.post("/:id/like", toggleLike);
+// 3. Add Comment: Protected
+router.post("/:id/comment", protect, addComment);
+
+// 4. Toggle Like: Protected
+router.post("/:id/like", protect, toggleLike);
 
 module.exports = router;
