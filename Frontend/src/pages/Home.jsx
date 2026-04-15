@@ -1,67 +1,91 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import PostCard from "../components/PostCard";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
+  const [externalPosts, setExternalPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [highlightedPostId, setHighlightedPostId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const scrolledRef = useRef(false);
 
+  // Fetch Reddit/meme posts once on mount
+  useEffect(() => {
+    const fetchExternal = async () => {
+      try {
+        const res = await fetch("https://meme-api.com/gimme/3");
+        const data = await res.json();
+        const mapped = data.memes.map((item, index) => ({
+          _id: `external-${index}-${Date.now()}`,
+          userId: { _id: `user-ext-${index}`, name: item.author },
+          image: item.url,
+          content: `${item.title} · r/${item.subreddit}`,
+          likes: [],
+          comments: [],
+          isExternal: true,
+        }));
+        setExternalPosts(mapped);
+      } catch (err) {
+        console.error("Failed to fetch memes:", err);
+        setExternalPosts([]);
+      }
+    };
+    fetchExternal();
+  }, []);
+
+  // Fetch DB (user) posts and merge with reddit posts
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const res = await fetch("/api/posts");
-        let data = await res.json();
-        
-        // Fetch external mock posts from Picsum
-        const mockRes = await fetch(`https://picsum.photos/v2/list?page=${Math.floor(Math.random() * 10) + 1}&limit=5`);
-        const mockData = await mockRes.json();
-        
-        // Map mock data to our Post schema format
-        const externalPosts = mockData.map(item => ({
-          _id: `external-${item.id}-${Date.now()}`,
-          userId: { _id: `user-${item.id}`, name: item.author },
-          image: item.download_url,
-          content: `Captured by ${item.author} 📸 #explore #photography`,
-          likes: [],
-          comments: [],
-          isExternal: true // Custom flag in case we want to restrict interactions
-        }));
-
-        // Combine DB posts and mock posts
-        setPosts([...data, ...externalPosts]);
+        const data = await res.json();
+        // Mix user posts + reddit posts, reddit at top
+        setPosts([...externalPosts, ...data]);
       } catch (err) {
         console.error("Failed to fetch posts:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPosts();
-    // Poll for new posts every 10 seconds
     const interval = setInterval(fetchPosts, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [externalPosts]);
+
+  // Scroll to & highlight post from notification link (?post=<id>)
+  useEffect(() => {
+    const targetPostId = searchParams.get("post");
+    if (!targetPostId || loading || scrolledRef.current) return;
+    const el = document.getElementById(`post-${targetPostId}`);
+    if (el) {
+      scrolledRef.current = true;
+      setHighlightedPostId(targetPostId);
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => setHighlightedPostId(null), 3000);
+      setSearchParams({});
+    }
+  }, [posts, loading, searchParams, setSearchParams]);
 
   return (
-    <div className="flex justify-center mt-6 px-4">
-      <div className="w-full max-w-2xl space-y-6">
+    <div style={{ padding: "16px 12px" }}>
+      {loading && (
+        <p style={{ textAlign: "center", color: "#555", paddingTop: 60, fontSize: 14 }}>
+          Loading posts...
+        </p>
+      )}
+      {!loading && posts.length === 0 && (
+        <p style={{ textAlign: "center", color: "#555", paddingTop: 60, fontSize: 14 }}>
+          No posts yet. Be the first to create one!
+        </p>
+      )}
 
-        {/* Loading */}
-        {loading && (
-          <p className="text-center text-zinc-400">Loading posts...</p>
-        )}
-
-        {/* No posts */}
-        {!loading && posts.length === 0 && (
-          <p className="text-center text-zinc-500">No posts yet. Create one!</p>
-        )}
-
-        {/* 📸 Feed */}
-        <div className="space-y-6">
-          {posts.map((p) => (
-            <PostCard key={p._id} post={p} />
-          ))}
-        </div>
-
+      <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: 12 }}>
+        {posts.map((p) => (
+          <div key={p._id} style={{ breakInside: "avoid", marginBottom: 12 }}>
+            <PostCard post={p} highlighted={highlightedPostId === p._id} />
+          </div>
+        ))}
       </div>
     </div>
   );
