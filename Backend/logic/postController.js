@@ -1,4 +1,5 @@
 const Post = require("../data/Post");
+const Notification = require("../data/Notification");
 
 exports.createPost = async (req, res) => {
   try {
@@ -21,7 +22,10 @@ exports.createPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
   try {
-    const posts = await Post.find().populate("userId", "name").sort({ createdAt: -1 });
+    const posts = await Post.find()
+      .populate("userId", "name")
+      .populate("comments.userId", "name")
+      .sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
     console.error("Get posts error:", error);
@@ -38,11 +42,24 @@ exports.addComment = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const newComment = { userId, text };
-    post.comments.push(newComment);
+    post.comments.push({ userId, text });
     await post.save();
 
-    res.json(post);
+    if (post.userId.toString() !== userId.toString()) {
+      await Notification.create({
+        recipient: post.userId,
+        sender: userId,
+        type: "comment",
+        post: post._id,
+      });
+    }
+
+    // Re-fetch with populated usernames so the frontend gets real names
+    const populatedPost = await Post.findById(post._id)
+      .populate("userId", "name")
+      .populate("comments.userId", "name");
+
+    res.json(populatedPost);
   } catch (error) {
     console.error("Add comment error:", error);
     res.status(500).json({ message: error.message });
@@ -58,12 +75,19 @@ exports.toggleLike = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Toggle logic
     const hasLiked = post.likes.includes(userId);
     if (hasLiked) {
-      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+      post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
     } else {
       post.likes.push(userId);
+      if (post.userId.toString() !== userId.toString()) {
+        await Notification.create({
+          recipient: post.userId,
+          sender: userId,
+          type: "like",
+          post: post._id,
+        });
+      }
     }
 
     await post.save();
