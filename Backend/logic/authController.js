@@ -2,19 +2,22 @@ const User = require("../data/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Generate JWT
+// JWT generator
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
 
-// SIGNUP
+// Handle user signup
 exports.signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-    // Hash password
+    // Encrypt the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -26,11 +29,11 @@ exports.signup = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error during registration" });
   }
 };
 
-// LOGIN
+// Handle user login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -40,21 +43,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    let isMatch = false;
-
-    // Support both hashed passwords (new) and legacy plain text ones
-    if (user.password && (user.password.startsWith("$2b$") || user.password.startsWith("$2a$"))) {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else {
-      isMatch = password === user.password;
-      
-      // Auto-migrate legacy user to hashed password on successful login
-      if (isMatch) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
-        await user.save();
-      }
-    }
+    // Compare provided password with hashed password in DB
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
       res.json({
@@ -67,6 +57,6 @@ exports.login = async (req, res) => {
       res.status(401).json({ message: "Invalid email or password" });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error during login" });
   }
-};
+};

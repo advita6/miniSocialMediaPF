@@ -10,7 +10,7 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const scrolledRef = useRef(false);
 
-  // Fetch Reddit/meme posts once on mount
+  // Get some memes from external api to show on home page
   useEffect(() => {
     const fetchExternal = async () => {
       try {
@@ -27,33 +27,34 @@ export default function Home() {
         }));
         setExternalPosts(mapped);
       } catch (err) {
-        console.error("Failed to fetch memes:", err);
+        console.error("error fetching memes:", err);
         setExternalPosts([]);
       }
     };
     fetchExternal();
   }, []);
 
-  // Fetch DB (user) posts and merge with reddit posts
+  // Get user posts from our backend and mix them with memes
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const res = await fetch("/api/posts");
         const data = await res.json();
-        // Mix user posts + reddit posts, reddit at top
+        // Combining external memes and our database posts
         setPosts([...externalPosts, ...data]);
       } catch (err) {
-        console.error("Failed to fetch posts:", err);
+        console.error("error fetching posts:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchPosts();
+    // Refresh the feed every 10 seconds
     const interval = setInterval(fetchPosts, 10000);
     return () => clearInterval(interval);
   }, [externalPosts]);
 
-  // Scroll to & highlight post from notification link (?post=<id>)
+  // If we came from a notification, scroll to that specific post
   useEffect(() => {
     const targetPostId = searchParams.get("post");
     if (!targetPostId || loading || scrolledRef.current) return;
@@ -71,12 +72,12 @@ export default function Home() {
     <div style={{ padding: "16px 12px" }}>
       {loading && (
         <p style={{ textAlign: "center", color: "#555", paddingTop: 60, fontSize: 14 }}>
-          Loading posts...
+          Loading your feed...
         </p>
       )}
       {!loading && posts.length === 0 && (
         <p style={{ textAlign: "center", color: "#555", paddingTop: 60, fontSize: 14 }}>
-          No posts yet. Be the first to create one!
+          Nothing to see here yet!
         </p>
       )}
 

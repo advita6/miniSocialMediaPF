@@ -12,7 +12,7 @@ import Admin from "./pages/Admin.jsx";
 import Chat from "./pages/Chat.jsx";
 import { AnimatePresence, motion } from "framer-motion";
 
-// 🔥 Route Protectors
+// Authentication guards
 const ProtectedRoute = ({ children }) => {
   const user = localStorage.getItem("user");
   if (!user) return <Navigate to="/login" replace />;
@@ -31,15 +31,15 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-// 🔥 Scroll to top on route change
+// Auto scroll to top on page change
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
-// 🎬 Page animation wrapper
-const PageWrapper = ({ children }) => (
+// Fade animations for pages
+const AnimatedPage = ({ children }) => (
   <motion.div
     initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
@@ -55,6 +55,7 @@ function AppContent() {
   const isAuthenticated = !!localStorage.getItem("user");
 
   useEffect(() => {
+    // Check for light mode preference
     if (localStorage.getItem("theme") === "light") {
       document.documentElement.classList.add("light-mode");
     }
@@ -64,22 +65,22 @@ function AppContent() {
     <div style={{ background: "#0D0D0D", minHeight: "100vh", color: "white" }}>
       <ScrollToTop />
 
-      {/* Navbar renders its own fixed top bar + fixed bottom pill */}
+      {/* Show Navbar only when logged in */}
       {isAuthenticated && <Navbar />}
 
-      {/* Page Content — padded top for fixed top bar, padded bottom for bottom pill */}
+      {/* Main page content area */}
       <div className={isAuthenticated ? "pt-[72px] pb-28" : "py-6"}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<ProtectedRoute><PageWrapper><Home /></PageWrapper></ProtectedRoute>} />
-            <Route path="/explore" element={<ProtectedRoute><PageWrapper><Explore /></PageWrapper></ProtectedRoute>} />
-            <Route path="/login" element={<AuthRoute><PageWrapper><Login /></PageWrapper></AuthRoute>} />
-            <Route path="/signup" element={<AuthRoute><PageWrapper><Signup /></PageWrapper></AuthRoute>} />
-            <Route path="/create" element={<ProtectedRoute><PageWrapper><CreatePost /></PageWrapper></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><PageWrapper><Profile /></PageWrapper></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><PageWrapper><Settings /></PageWrapper></ProtectedRoute>} />
-            <Route path="/admin" element={<AdminRoute><PageWrapper><Admin /></PageWrapper></AdminRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><PageWrapper><Chat /></PageWrapper></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><AnimatedPage><Home /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/explore" element={<ProtectedRoute><AnimatedPage><Explore /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/login" element={<AuthRoute><AnimatedPage><Login /></AnimatedPage></AuthRoute>} />
+            <Route path="/signup" element={<AuthRoute><AnimatedPage><Signup /></AnimatedPage></AuthRoute>} />
+            <Route path="/create" element={<ProtectedRoute><AnimatedPage><CreatePost /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><AnimatedPage><Profile /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><AnimatedPage><Settings /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AnimatedPage><Admin /></AnimatedPage></AdminRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><AnimatedPage><Chat /></AnimatedPage></ProtectedRoute>} />
           </Routes>
         </AnimatePresence>
       </div>

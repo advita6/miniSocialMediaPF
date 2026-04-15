@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaHeart, FaRegCommentAlt, FaTrash } from "react-icons/fa";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helper to show how long ago a post was made
 function timeAgo(date) {
   if (!date) return "";
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -32,7 +32,6 @@ function avatarGradient(name) {
   return GRADIENTS[i];
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function PostCard({ post, highlighted = false }) {
   const user = JSON.parse(localStorage.getItem("user")) || null;
   const [likes, setLikes] = useState(post.likes || []);
@@ -47,7 +46,7 @@ export default function PostCard({ post, highlighted = false }) {
   const authorName = post.userId?.name || "Anonymous";
   const [gStart, gEnd] = avatarGradient(authorName);
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
+  // Toggle like status
   const toggleLike = async () => {
     if (!user) { alert("Please login to like"); return; }
     const wasLiked = liked;
@@ -59,7 +58,10 @@ export default function PostCard({ post, highlighted = false }) {
     } else {
       setLikes((l) => l.filter((id) => id !== user._id));
     }
+    
+    // External memes aren't saved to our db
     if (post.isExternal) return;
+
     try {
       await fetch(`/api/posts/${post._id}/like`, {
         method: "POST",
@@ -67,11 +69,13 @@ export default function PostCard({ post, highlighted = false }) {
         body: JSON.stringify({ userId: user._id }),
       });
     } catch {
+      // rollback if it fails
       setLiked(wasLiked);
       setLikes(post.likes);
     }
   };
 
+  // Add a comment to the post
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -79,38 +83,55 @@ export default function PostCard({ post, highlighted = false }) {
     try {
       const u = JSON.parse(localStorage.getItem("user"));
       if (!u) { alert("Please login to comment"); return; }
+      
       if (post.isExternal) {
         setComments((c) => [...c, { text: commentText, userId: u }]);
-        setCommentText(""); setLoading(false); return;
+        setCommentText(""); 
+        setLoading(false); 
+        return;
       }
+      
       const res = await fetch(`/api/posts/${post._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${u?.token || ""}` },
         body: JSON.stringify({ userId: u._id, text: commentText }),
       });
       const updated = await res.json();
-      if (res.ok) { setComments(updated.comments); setCommentText(""); }
-      else alert(updated.message || "Failed to add comment");
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+      if (res.ok) { 
+        setComments(updated.comments); 
+        setCommentText(""); 
+      } else {
+        alert(updated.message || "Failed to add comment");
+      }
+    } catch (err) { 
+      console.error("error adding comment:", err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
+  // Delete the post (admin or author)
   const handleDelete = async () => {
-    if (!window.confirm("Delete this post?")) return;
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
       const u = JSON.parse(localStorage.getItem("user"));
       const res = await fetch(`/api/posts/${post._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${u?.token || ""}` },
       });
-      if (res.ok) setIsDeleted(true);
-      else { const d = await res.json(); alert(d.message || "Failed"); }
-    } catch (err) { console.error(err); }
+      if (res.ok) {
+        setIsDeleted(true);
+      } else { 
+        const d = await res.json(); 
+        alert(d.message || "Failed to delete"); 
+      }
+    } catch (err) { 
+      console.error("error deleting post:", err); 
+    }
   };
 
   if (isDeleted) return null;
 
-  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div
       id={`post-${post._id}`}
@@ -124,10 +145,10 @@ export default function PostCard({ post, highlighted = false }) {
         transition: "border-color 0.7s, box-shadow 0.7s",
       }}
     >
-      {/* ── Header ── */}
+      {/* Post Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Avatar */}
+          {/* User Avatar */}
           <div style={{
             width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
             background: `linear-gradient(135deg, ${gStart}, ${gEnd})`,
@@ -147,7 +168,7 @@ export default function PostCard({ post, highlighted = false }) {
           </div>
         </div>
 
-        {/* Delete */}
+        {/* Delete option */}
         {user && !post.isExternal &&
           ((post.userId?._id === user._id) || user.isAdmin) && (
             <button onClick={handleDelete}
@@ -160,14 +181,14 @@ export default function PostCard({ post, highlighted = false }) {
           )}
       </div>
 
-      {/* ── Caption text ── */}
+      {/* Post text content */}
       {post.content && (
         <p style={{ padding: "0 16px 12px", fontSize: 14, color: "#C9CDD4", lineHeight: 1.55, margin: 0 }}>
           {post.content}
         </p>
       )}
 
-      {/* ── Image ── */}
+      {/* Post image */}
       {post.image && (
         <div
           onDoubleClick={toggleLike}
@@ -187,9 +208,8 @@ export default function PostCard({ post, highlighted = false }) {
         </div>
       )}
 
-      {/* ── Action bar ── */}
+      {/* Buttons (Like, Comment) */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px 14px" }}>
-        {/* Like */}
         <button onClick={toggleLike}
           style={{
             display: "flex", alignItems: "center", gap: 6,
@@ -201,7 +221,6 @@ export default function PostCard({ post, highlighted = false }) {
           <span style={{ fontSize: 13, color: "#888", fontWeight: 500 }}>{likes.length}</span>
         </button>
 
-        {/* Comment toggle */}
         <button onClick={() => setShowComments((v) => !v)}
           style={{
             display: "flex", alignItems: "center", gap: 6,
@@ -218,7 +237,7 @@ export default function PostCard({ post, highlighted = false }) {
         <div style={{ flex: 1 }} />
       </div>
 
-      {/* ── Comments section (collapsible) ── */}
+      {/* Comments section */}
       {showComments && (
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "12px 16px 16px" }}>
           {comments.length > 0 && (
