@@ -1,8 +1,39 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FaHeart, FaRegComment, FaPaperPlane, FaTrash } from "react-icons/fa";
+import { FaHeart, FaRegCommentAlt, FaTrash } from "react-icons/fa";
 
-export default function PostCard({ post }) {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function timeAgo(date) {
+  if (!date) return "";
+  const s = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(date).toLocaleDateString();
+}
+
+const GRADIENTS = [
+  ["#FF6B8A", "#FF354C"],
+  ["#4ECDC4", "#2BB5AD"],
+  ["#A855F7", "#7C3AED"],
+  ["#F97316", "#EA580C"],
+  ["#00D97E", "#00B364"],
+  ["#3B82F6", "#2563EB"],
+  ["#EC4899", "#DB2777"],
+  ["#EAB308", "#CA8A04"],
+];
+
+function avatarGradient(name) {
+  const i = (name || "A").charCodeAt(0) % GRADIENTS.length;
+  return GRADIENTS[i];
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+export default function PostCard({ post, highlighted = false }) {
   const user = JSON.parse(localStorage.getItem("user")) || null;
   const [likes, setLikes] = useState(post.likes || []);
   const [liked, setLiked] = useState(user ? (post.likes || []).includes(user._id) : false);
@@ -11,205 +42,224 @@ export default function PostCard({ post }) {
   const [comments, setComments] = useState(post.comments || []);
   const [loading, setLoading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
-  const toggleLocalLike = async () => {
-    if (!user) {
-      alert("Please login to like");
-      return;
-    }
-    
-    // Optimistic update
-    const isCurrentlyLiked = liked;
-    setLiked(!isCurrentlyLiked);
-    if (!isCurrentlyLiked) {
-      setLikes([...likes, user._id]);
+  const authorName = post.userId?.name || "Anonymous";
+  const [gStart, gEnd] = avatarGradient(authorName);
+
+  // ── Actions ─────────────────────────────────────────────────────────────────
+  const toggleLike = async () => {
+    if (!user) { alert("Please login to like"); return; }
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    if (!wasLiked) {
+      setLikes((l) => [...l, user._id]);
       setShowHeart(true);
-      setTimeout(() => setShowHeart(false), 800);
+      setTimeout(() => setShowHeart(false), 700);
     } else {
-      setLikes(likes.filter(id => id !== user._id));
+      setLikes((l) => l.filter((id) => id !== user._id));
     }
-
-    // Skip backend request if external API mock post
     if (post.isExternal) return;
-
     try {
       await fetch(`/api/posts/${post._id}/like`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user._id })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${user?.token || ""}` },
+        body: JSON.stringify({ userId: user._id }),
       });
-    } catch (err) {
-      console.error("Like error:", err);
-      // Revert if failed
-      setLiked(isCurrentlyLiked);
+    } catch {
+      setLiked(wasLiked);
       setLikes(post.likes);
     }
-  };
-
-  const handleDoubleClick = () => {
-    if (!liked) toggleLocalLike();
   };
 
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
     setLoading(true);
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user) {
-        alert("Please login to comment");
-        return;
-      }
-
-      // Simulate comment for external API mock posts
+      const u = JSON.parse(localStorage.getItem("user"));
+      if (!u) { alert("Please login to comment"); return; }
       if (post.isExternal) {
-        setComments([...comments, { text: commentText, userId: user }]);
-        setCommentText("");
-        setLoading(false);
-        return;
+        setComments((c) => [...c, { text: commentText, userId: u }]);
+        setCommentText(""); setLoading(false); return;
       }
-
       const res = await fetch(`/api/posts/${post._id}/comment`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user._id, text: commentText })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${u?.token || ""}` },
+        body: JSON.stringify({ userId: u._id, text: commentText }),
       });
-
-      const updatedPost = await res.json();
-      if (res.ok) {
-        setComments(updatedPost.comments);
-        setCommentText("");
-      } else {
-        alert(updatedPost.message || "Failed to add comment");
-      }
-    } catch (err) {
-      console.error("Comment error:", err);
-    } finally {
-      setLoading(false);
-    }
+      const updated = await res.json();
+      if (res.ok) { setComments(updated.comments); setCommentText(""); }
+      else alert(updated.message || "Failed to add comment");
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    
+    if (!window.confirm("Delete this post?")) return;
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const u = JSON.parse(localStorage.getItem("user"));
       const res = await fetch(`/api/posts/${post._id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${user?.token || ""}` }
+        headers: { Authorization: `Bearer ${u?.token || ""}` },
       });
-      
-      if (res.ok) {
-        setIsDeleted(true);
-      } else {
-        const data = await res.json();
-        alert(data.message || "Failed to delete post");
-      }
-    } catch (err) {
-      console.error("Failed to delete", err);
-    }
+      if (res.ok) setIsDeleted(true);
+      else { const d = await res.json(); alert(d.message || "Failed"); }
+    } catch (err) { console.error(err); }
   };
 
   if (isDeleted) return null;
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden shadow-sm">
-      
-      {/* Header */}
-      <div className="p-4 font-semibold text-zinc-100 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs uppercase">
-            {post.userId?.name?.[0] || "?"}
+    <div
+      id={`post-${post._id}`}
+      style={{
+        background: "#181818",
+        border: highlighted ? "1px solid #6366F1" : "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 20,
+        overflow: "hidden",
+        scrollMarginTop: 80,
+        boxShadow: highlighted ? "0 0 24px rgba(99,102,241,0.35)" : "none",
+        transition: "border-color 0.7s, box-shadow 0.7s",
+      }}
+    >
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Avatar */}
+          <div style={{
+            width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
+            background: `linear-gradient(135deg, ${gStart}, ${gEnd})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: 700, fontSize: 17, color: "white",
+            userSelect: "none",
+          }}>
+            {authorName[0]?.toUpperCase()}
           </div>
-          {post.userId?.name || "Anonymous"}
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 14, color: "white", margin: 0, lineHeight: 1.3 }}>
+              {authorName}
+            </p>
+            <p style={{ fontSize: 12, color: "#555", margin: 0, lineHeight: 1.3 }}>
+              {timeAgo(post.createdAt)}
+            </p>
+          </div>
         </div>
-        
-        {user && ((post.userId && post.userId._id === user._id) || user.isAdmin) && (
-          <button onClick={handleDelete} className="text-zinc-500 hover:text-red-500 transition">
-            <FaTrash size={16} />
-          </button>
-        )}
+
+        {/* Delete */}
+        {user && !post.isExternal &&
+          ((post.userId?._id === user._id) || user.isAdmin) && (
+            <button onClick={handleDelete}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#444", padding: 4, transition: "color 0.2s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#444")}
+            >
+              <FaTrash size={13} />
+            </button>
+          )}
       </div>
 
-      {/* Image */}
-      {post.image && (
-        <div className="relative" onDoubleClick={handleDoubleClick}>
-          <img
-            src={post.image.startsWith("/") ? post.image : post.image}
-            alt=""
-            className="w-full object-cover max-h-[600px]"
-          />
+      {/* ── Caption text ── */}
+      {post.content && (
+        <p style={{ padding: "0 16px 12px", fontSize: 14, color: "#C9CDD4", lineHeight: 1.55, margin: 0 }}>
+          {post.content}
+        </p>
+      )}
 
-          {/* ❤️ Animation */}
+      {/* ── Image ── */}
+      {post.image && (
+        <div
+          onDoubleClick={toggleLike}
+          style={{ position: "relative", margin: "0 12px 12px", borderRadius: 14, overflow: "hidden" }}
+        >
+          <img src={post.image} alt="" style={{ width: "100%", display: "block" }} />
           {showHeart && (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1.5 }}
-              className="absolute inset-0 flex items-center justify-center"
+              initial={{ scale: 0, opacity: 1 }}
+              animate={{ scale: 1.6, opacity: 0 }}
+              transition={{ duration: 0.55 }}
+              style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
             >
-              <FaHeart className="text-white text-6xl opacity-80" />
+              <FaHeart style={{ color: "white", fontSize: 64, filter: "drop-shadow(0 0 12px rgba(255,255,255,0.5))" }} />
             </motion.div>
           )}
         </div>
       )}
 
-      {/* Actions */}
-      <div className="p-4 flex flex-col gap-2">
-        <div className="flex gap-5 text-xl">
-          <FaHeart
-            className={`cursor-pointer transition-colors duration-200 ${liked ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
-            onClick={toggleLocalLike}
-          />
-          <FaRegComment className="cursor-pointer text-zinc-400 hover:text-white transition-colors duration-200" />
+      {/* ── Action bar ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px 14px" }}>
+        {/* Like */}
+        <button onClick={toggleLike}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "none", border: "none", cursor: "pointer",
+            color: liked ? "#FF354C" : "#555", transition: "color 0.2s",
+          }}
+        >
+          <FaHeart size={17} />
+          <span style={{ fontSize: 13, color: "#888", fontWeight: 500 }}>{likes.length}</span>
+        </button>
+
+        {/* Comment toggle */}
+        <button onClick={() => setShowComments((v) => !v)}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "none", border: "none", cursor: "pointer",
+            color: showComments ? "white" : "#555", transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#aaa")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = showComments ? "white" : "#555")}
+        >
+          <FaRegCommentAlt size={16} />
+          <span style={{ fontSize: 13, color: "#888", fontWeight: 500 }}>{comments.length}</span>
+        </button>
+
+        <div style={{ flex: 1 }} />
+      </div>
+
+      {/* ── Comments section (collapsible) ── */}
+      {showComments && (
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "12px 16px 16px" }}>
+          {comments.length > 0 && (
+            <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+              {comments.map((c, i) => (
+                <div key={i} style={{ fontSize: 13 }}>
+                  <span style={{ fontWeight: 600, color: "#E5E7EB", marginRight: 6 }}>
+                    {c.userId?.name || "Anonymous"}
+                  </span>
+                  <span style={{ color: "#9CA3AF" }}>{c.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <form onSubmit={handleAddComment} style={{ display: "flex", gap: 8 }}>
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment..."
+              autoComplete="off"
+              style={{
+                flex: 1, background: "#111",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 12, padding: "9px 12px",
+                color: "white", fontSize: 13, outline: "none",
+              }}
+            />
+            <button type="submit" disabled={loading}
+              style={{
+                background: "#00D97E", border: "none", borderRadius: 12,
+                padding: "9px 16px", cursor: loading ? "not-allowed" : "pointer",
+                color: "#000", fontWeight: 700, fontSize: 13,
+                opacity: loading ? 0.6 : 1, transition: "opacity 0.2s",
+              }}
+            >
+              Post
+            </button>
+          </form>
         </div>
-        {likes.length > 0 && (
-          <div className="text-sm font-semibold text-zinc-200">
-            {likes.length} {likes.length === 1 ? "like" : "likes"}
-          </div>
-        )}
-      </div>
-
-      {/* Caption */}
-      <div className="px-4 pb-2 text-sm text-zinc-300">
-        <p>
-          <span className="font-bold text-zinc-100 mr-2">{post.userId?.name || "Anonymous"}</span>{" "}
-          {post.content}
-        </p>
-      </div>
-
-      {/* Comments List */}
-      <div className="px-4 pb-4 space-y-2 border-t border-zinc-800 mt-2 pt-4">
-        {comments.map((c, i) => (
-          <div key={i} className="text-sm">
-             <span className="font-semibold text-zinc-200 mr-2">User {i+1}</span>
-             <span className="text-zinc-400">{c.text}</span>
-          </div>
-        ))}
-
-        {/* Add Comment Input */}
-        <form onSubmit={handleAddComment} className="flex items-center gap-2 mt-4 bg-zinc-800/50 p-2 rounded-lg border border-zinc-700/50">
-          <input
-            type="text"
-            className="bg-transparent flex-1 outline-none text-sm px-2 text-zinc-200 placeholder:text-zinc-500"
-            placeholder="Add a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-          />
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="text-blue-500 hover:text-blue-400 disabled:opacity-50 transition-colors"
-          >
-            <FaPaperPaperPlane />
-          </button>
-        </form>
-      </div>
-
+      )}
     </div>
   );
-}
-
-function FaPaperPaperPlane() {
-  return <FaPaperPlane />;
 }
