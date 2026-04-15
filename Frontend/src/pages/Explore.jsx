@@ -34,29 +34,22 @@ export default function Explore() {
   useEffect(() => { fetchMemes(); }, []);
 
   return (
-    <div style={{ padding: "16px 12px" }}>
+    <div className="px-4 py-2 max-w-7xl mx-auto">
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, padding: "0 4px" }}>
+      <div className="flex items-center justify-between mb-8 px-2">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "white", margin: 0, letterSpacing: "-0.5px" }}>
+          <h1 className="text-3xl font-extrabold m-0 tracking-tight bg-gradient-to-r from-orange-400 to-rose-500 bg-clip-text text-transparent">
             Explore
           </h1>
-          <p style={{ fontSize: 13, color: "#555", margin: "4px 0 0" }}>
-            Trending posts from Reddit
+          <p className="text-[14px] text-zinc-400 mt-1 font-medium">
+            Trending posts from across the internet
           </p>
         </div>
         <button
           onClick={fetchMemes}
           disabled={loading}
-          style={{
-            background: "#00D97E", border: "none", borderRadius: 12,
-            padding: "9px 18px", color: "#000", fontWeight: 700,
-            fontSize: 13, cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1, transition: "opacity 0.2s, transform 0.2s",
-          }}
-          onMouseEnter={(e) => { if (!loading) e.currentTarget.style.transform = "scale(1.04)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+          className="bg-zinc-800/80 backdrop-blur-md border border-white/10 hover:border-white/20 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
           {loading ? "Loading…" : "↻ Refresh"}
         </button>
@@ -64,29 +57,26 @@ export default function Explore() {
 
       {/* Loading state */}
       {loading && (
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: "50%",
-            border: "3px solid rgba(255,255,255,0.1)",
-            borderTopColor: "#00D97E",
-            animation: "spin 0.8s linear infinite",
-          }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div className="flex justify-center pt-20">
+          <div className="w-10 h-10 border-4 border-white/10 border-t-rose-500 rounded-full animate-spin" />
         </div>
       )}
 
       {/* Error state */}
       {!loading && error && (
-        <p style={{ textAlign: "center", color: "#555", paddingTop: 40, fontSize: 14 }}>
-          Could not load posts. Check your connection and try refreshing.
-        </p>
+        <div className="flex flex-col items-center pt-20 space-y-4">
+          <div className="text-5xl opacity-50">💔</div>
+          <p className="text-zinc-500 font-medium text-sm">
+            Could not load posts. Check your connection.
+          </p>
+        </div>
       )}
 
       {/* Masonry grid */}
       {!loading && !error && (
-        <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: 12 }}>
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
           {posts.map((p) => (
-            <div key={p._id} style={{ breakInside: "avoid", marginBottom: 12 }}>
+            <div key={p._id} className="break-inside-avoid">
               <PostCard post={p} />
             </div>
           ))}

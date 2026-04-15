@@ -69,21 +69,27 @@ export default function Home() {
   }, [posts, loading, searchParams, setSearchParams]);
 
   return (
-    <div style={{ padding: "16px 12px" }}>
+    <div className="px-4 py-2 max-w-7xl mx-auto">
       {loading && (
-        <p style={{ textAlign: "center", color: "#555", paddingTop: 60, fontSize: 14 }}>
-          Loading your feed...
-        </p>
+        <div className="flex flex-col items-center pt-24 space-y-4">
+          <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin"></div>
+          <p className="text-zinc-500 font-medium text-sm animate-pulse">
+            Curating your feed...
+          </p>
+        </div>
       )}
       {!loading && posts.length === 0 && (
-        <p style={{ textAlign: "center", color: "#555", paddingTop: 60, fontSize: 14 }}>
-          Nothing to see here yet!
-        </p>
+        <div className="flex flex-col items-center pt-24 space-y-4">
+          <div className="text-6xl opacity-50">🪴</div>
+          <p className="text-zinc-500 font-medium text-sm">
+            Nothing to see here yet! Try following some users.
+          </p>
+        </div>
       )}
 
-      <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: 12 }}>
+      <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
         {posts.map((p) => (
-          <div key={p._id} style={{ breakInside: "avoid", marginBottom: 12 }}>
+          <div key={p._id} className="break-inside-avoid">
             <PostCard post={p} highlighted={highlightedPostId === p._id} />
           </div>
         ))}

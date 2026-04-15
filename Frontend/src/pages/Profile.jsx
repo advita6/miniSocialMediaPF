@@ -30,41 +30,64 @@ export default function Profile() {
   }, [user._id]);
 
   return (
-    <div className="flex flex-col items-center mt-10 px-4 w-full">
+    <div className="flex flex-col items-center mt-10 px-4 w-full max-w-7xl mx-auto">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-zinc-900 p-8 rounded-2xl border border-zinc-800 shadow-xl mb-8"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-lg glass-panel p-8 rounded-[2rem] shadow-2xl mb-12 relative overflow-hidden"
       >
-        <div className="flex flex-col items-center">
-          {/* Avatar */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg mb-6">
-            {user.name && user.name[0] ? user.name[0].toUpperCase() : "?"}
+        {/* Decorative background glow inside the card */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-gradient-to-b from-indigo-500/20 to-transparent pointer-events-none"></div>
+
+        <div className="flex flex-col items-center relative z-10">
+          {/* Avatar with glow */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-50"></div>
+            <div className="relative w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-5xl font-extrabold text-white shadow-xl border-4 border-zinc-900/50">
+              {user.name && user.name[0] ? user.name[0].toUpperCase() : "?"}
+            </div>
           </div>
           
-          <h2 className="text-2xl font-bold text-white mb-2">{user.name}</h2>
-          <p className="text-zinc-400 mb-8">{user.email}</p>
+          <h2 className="text-3xl font-extrabold text-white mb-1 tracking-tight">{user.name}</h2>
+          <p className="text-zinc-400 font-medium mb-8 bg-zinc-800/50 px-4 py-1.5 rounded-full border border-white/5 text-[13px]">
+            {user.email}
+          </p>
           
-          <div className="w-full bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50 text-center">
-            <h3 className="font-semibold text-zinc-200 border-b border-zinc-700 pb-2 mb-3">Posts Created</h3>
-            <p className="text-2xl font-bold text-blue-400">{posts.length}</p>
+          <div className="w-full bg-zinc-950/40 rounded-2xl p-5 border border-white/5 text-center shadow-inner">
+            <h3 className="font-semibold text-zinc-400 text-sm uppercase tracking-wider mb-2">Posts Created</h3>
+            <p className="text-4xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              {posts.length}
+            </p>
           </div>
         </div>
       </motion.div>
 
       {/* User's Posts Feed */}
       <div className="w-full max-w-2xl space-y-6">
-        <h3 className="text-xl font-bold text-white mb-4 border-b border-zinc-800 pb-2">Your Posts</h3>
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+          <h3 className="text-2xl font-bold text-white tracking-tight">Your Posts</h3>
+        </div>
         
-        {loading && <p className="text-center text-zinc-400">Loading posts...</p>}
+        {loading && (
+          <div className="flex flex-col items-center pt-10 space-y-4">
+            <div className="w-10 h-10 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin"></div>
+            <p className="text-zinc-500 font-medium text-sm animate-pulse">Loading posts...</p>
+          </div>
+        )}
         
         {!loading && posts.length === 0 && (
-          <p className="text-center text-zinc-500">You haven't created any posts yet.</p>
+          <div className="text-center bg-white/5 rounded-2xl border border-white/5 p-12">
+            <div className="text-5xl opacity-50 mb-4">📭</div>
+            <p className="text-zinc-400 font-medium">You haven't created any posts yet.</p>
+          </div>
         )}
 
-        {posts.map((p) => (
-          <PostCard key={p._id} post={p} />
-        ))}
+        <div className="space-y-6">
+          {posts.map((p) => (
+            <PostCard key={p._id} post={p} />
+          ))}
+        </div>
       </div>
     </div>
   );

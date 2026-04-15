@@ -128,16 +128,19 @@ export default function Chat() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto h-[80vh] flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+    <div className="max-w-4xl mx-auto h-[80vh] flex flex-col glass-panel rounded-[2rem] overflow-hidden shadow-2xl relative">
+      {/* Background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none"></div>
+
       {/* Header */}
-      <div className="bg-zinc-800/80 backdrop-blur-sm border-b border-zinc-700/50 p-4 flex justify-between items-center">
+      <div className="bg-white/5 backdrop-blur-md border-b border-white/10 p-4 flex justify-between items-center relative z-10">
         <div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Global Chat</h2>
-          <p className="text-xs text-zinc-400">Anonymous Messaging</p>
+          <h2 className="text-2xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent tracking-tight">Global Chat</h2>
+          <p className="text-[12px] text-zinc-400 font-medium">Anonymous Messaging</p>
         </div>
-        <div className="flex items-center gap-2 bg-zinc-950/50 px-3 py-1.5 rounded-full border border-zinc-800/50">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-sm font-medium text-zinc-300">You are: {myIdentifier || 'Connecting...'}</span>
+        <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-white/5 shadow-inner">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+          <span className="text-[13px] font-bold text-zinc-300">You are: <span className="text-white">{myIdentifier || 'Connecting...'}</span></span>
         </div>
       </div>
 

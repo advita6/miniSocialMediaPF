@@ -62,14 +62,14 @@ function AppContent() {
   }, []);
 
   return (
-    <div style={{ background: "#0D0D0D", minHeight: "100vh", color: "white" }}>
+    <div className="min-h-screen text-zinc-100 flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
       <ScrollToTop />
 
       {/* Show Navbar only when logged in */}
       {isAuthenticated && <Navbar />}
 
       {/* Main page content area */}
-      <div className={isAuthenticated ? "pt-[72px] pb-28" : "py-6"}>
+      <div className={isAuthenticated ? "pt-[80px] pb-[100px]" : "py-6"}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<ProtectedRoute><AnimatedPage><Home /></AnimatedPage></ProtectedRoute>} />

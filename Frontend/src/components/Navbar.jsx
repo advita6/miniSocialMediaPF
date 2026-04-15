@@ -85,55 +85,28 @@ export default function Navbar() {
   return (
     <>
       {/* ════ TOP BAR ════ */}
-      <div
-        style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-          background: "rgba(13,13,13,0.45)",
-          backdropFilter: "blur(24px) saturate(160%)",
-          WebkitBackdropFilter: "blur(24px) saturate(160%)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          height: 64,
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 24px",
-        }}
-      >
+      <div className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6 bg-zinc-950/40 backdrop-blur-xl backdrop-saturate-150 border-b border-white/5">
+        
         {/* Logo */}
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <span style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: "#FF354C", flexShrink: 0, display: "inline-block",
-          }} />
-          <span style={{ fontSize: 20, fontWeight: 800, color: "white", letterSpacing: "-0.5px" }}>
+        <Link to="/" className="flex items-center gap-2.5 text-decoration-none group">
+          <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)] group-hover:scale-110 transition-transform"></div>
+          <span className="text-xl font-extrabold text-white tracking-tight">
             SocialX
           </span>
         </Link>
 
-        {/* Right — Bell only */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-
-          {/* Notifications */}
-          <div style={{ position: "relative" }} ref={notificationsRef}>
+        {/* Right — Bell */}
+        <div className="flex items-center gap-3">
+          <div className="relative" ref={notificationsRef}>
             <button
               onClick={handleNotificationsClick}
-              style={{
-                width: 40, height: 40, borderRadius: "50%",
-                background: "#1C1C1C", border: "1px solid rgba(255,255,255,0.07)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: showNotifications ? "white" : "#888",
-                cursor: "pointer", transition: "color 0.2s", position: "relative",
-              }}
+              className={`w-10 h-10 rounded-full flex items-center justify-center border border-white/10 transition-all ${
+                showNotifications ? "bg-zinc-800 text-white" : "bg-black/20 text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
             >
-              <FaBell size={13} />
+              <FaBell size={14} />
               {unreadCount > 0 && (
-                <span style={{
-                  position: "absolute", top: -1, right: -1,
-                  background: "#FF354C", color: "white",
-                  fontSize: 9, fontWeight: 700,
-                  width: 16, height: 16, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "2px solid #0D0D0D",
-                }}>
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex flex-col items-center justify-center border-2 border-zinc-950">
                   {unreadCount}
                 </span>
               )}
@@ -143,59 +116,49 @@ export default function Navbar() {
             <AnimatePresence>
               {showNotifications && (
                 <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  style={{
-                    position: "absolute", top: "calc(100% + 12px)", right: 0,
-                    width: 320, background: "#1A1A1A",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 18, boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
-                    overflow: "hidden", zIndex: 999,
-                  }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="absolute top-[calc(100%+12px)] right-0 w-80 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[999]"
                 >
-                  <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontWeight: 700, fontSize: 14 }}>
+                  <div className="px-4 py-3 border-b border-white/5 font-bold text-sm text-zinc-100">
                     Notifications
                   </div>
-                  <div style={{ maxHeight: 380, overflowY: "auto" }}>
+                  <div className="max-h-96 overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: "center", color: "#555", fontSize: 13 }}>
+                      <div className="p-6 text-center text-zinc-500 text-sm">
                         No notifications yet
                       </div>
-                    ) : notifications.map((n) => (
-                      <div
-                        key={n._id}
-                        onClick={() => {
-                          if (n.post?._id) {
-                            navigate(`/?post=${n.post._id}`);
-                            setShowNotifications(false);
-                          }
-                        }}
-                        style={{
-                          padding: "12px 16px",
-                          borderBottom: "1px solid rgba(255,255,255,0.05)",
-                          cursor: n.post?._id ? "pointer" : "default",
-                          background: n.read ? "transparent" : "rgba(255,255,255,0.04)",
-                          transition: "background 0.2s",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = n.read ? "transparent" : "rgba(255,255,255,0.04)")}
-                      >
-                        <p style={{ fontSize: 13, color: "#D1D5DB", margin: 0 }}>
-                          <strong style={{ color: "white" }}>{n.sender?.name}</strong>{" "}
-                          {n.type === "like" ? "liked" : "commented on"} your post.
-                        </p>
-                        {n.post?._id && (
-                          <p style={{ fontSize: 11, color: "#00D97E", margin: "3px 0 0" }}>
-                            Click to view post →
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n._id}
+                          onClick={() => {
+                            if (n.post?._id) {
+                              navigate(`/?post=${n.post._id}`);
+                              setShowNotifications(false);
+                            }
+                          }}
+                          className={`p-3.5 border-b border-white/5 transition-colors cursor-pointer ${
+                            n.read ? "bg-transparent hover:bg-white/5" : "bg-indigo-500/10 hover:bg-indigo-500/20"
+                          }`}
+                        >
+                          <p className="text-[13px] text-zinc-300 m-0 leading-snug">
+                            <strong className="text-white font-semibold">{n.sender?.name}</strong>{" "}
+                            {n.type === "like" ? "liked" : "commented on"} your post.
                           </p>
-                        )}
-                        <p style={{ fontSize: 11, color: "#555", margin: "3px 0 0" }}>
-                          {new Date(n.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
+                          {n.post?._id && (
+                            <p className="text-[11px] text-indigo-400 m-0 mt-1.5 font-medium">
+                              Click to view post &rarr;
+                            </p>
+                          )}
+                          <p className="text-[11px] text-zinc-500 m-0 mt-1">
+                            {new Date(n.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -205,17 +168,7 @@ export default function Navbar() {
       </div>
 
       {/* ════ BOTTOM PILL NAV ════ */}
-      <div style={{
-        position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-        zIndex: 50, display: "flex", alignItems: "center", gap: 4,
-        padding: "8px 16px",
-        background: "rgba(20,20,20,0.45)",
-        backdropFilter: "blur(24px) saturate(160%)",
-        WebkitBackdropFilter: "blur(24px) saturate(160%)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: 999,
-        boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
-      }}>
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 p-2 bg-zinc-950/60 backdrop-blur-2xl backdrop-saturate-200 border border-white/10 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
         {bottomItems.map((item) => {
           const isActive = location.pathname === item.path;
           if (item.special) {
@@ -223,16 +176,7 @@ export default function Navbar() {
               <Link
                 key={item.id}
                 to={item.path}
-                style={{
-                  width: 48, height: 48, borderRadius: "50%",
-                  background: "#00D97E",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#000", textDecoration: "none",
-                  margin: "0 4px",
-                  transition: "transform 0.2s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white mx-1 shadow-lg hover:scale-110 hover:shadow-indigo-500/50 transition-all duration-300"
               >
                 {item.icon}
               </Link>
@@ -242,16 +186,11 @@ export default function Navbar() {
             <Link
               key={item.id}
               to={item.path}
-              style={{
-                width: 44, height: 44, borderRadius: "50%",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: isActive ? "white" : "#666",
-                background: isActive ? "rgba(255,255,255,0.1)" : "transparent",
-                textDecoration: "none",
-                transition: "color 0.2s, background 0.2s",
-              }}
-              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "#aaa"; }}
-              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "#666"; }}
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+                isActive 
+                  ? "text-white bg-white/10 shadow-inner" 
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+              }`}
             >
               {item.icon}
             </Link>
@@ -259,17 +198,14 @@ export default function Navbar() {
         })}
 
         {/* Profile icon with dropdown */}
-        <div style={{ position: "relative" }} ref={profileMenuRef}>
+        <div className="relative" ref={profileMenuRef}>
           <button
             onClick={() => setShowProfileMenu((v) => !v)}
-            style={{
-              width: 44, height: 44, borderRadius: "50%",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: location.pathname === "/profile" ? "white" : "#666",
-              background: location.pathname === "/profile" ? "rgba(255,255,255,0.1)" : "transparent",
-              border: "none", cursor: "pointer",
-              transition: "color 0.2s, background 0.2s",
-            }}
+            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border-0 ${
+              location.pathname === "/profile" 
+                ? "text-white bg-white/10 shadow-inner" 
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+            }`}
           >
             <FaUser size={18} />
           </button>
@@ -277,66 +213,44 @@ export default function Navbar() {
           <AnimatePresence>
             {showProfileMenu && (
               <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                style={{
-                  position: "absolute", bottom: "calc(100% + 12px)", right: 0,
-                  width: 200, background: "#1A1A1A",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 18, boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
-                  overflow: "hidden", zIndex: 999,
-                }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute bottom-[calc(100%+16px)] right-0 w-48 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[999]"
               >
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.name}</p>
-                  <p style={{ fontSize: 11, color: "#555", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email}</p>
+                <div className="px-4 py-3 border-b border-white/5">
+                  <p className="text-[13px] font-bold text-white m-0 truncate">{user?.name}</p>
+                  <p className="text-[11px] text-zinc-400 m-0 mt-0.5 truncate">{user?.email}</p>
                 </div>
-                <div style={{ padding: 8 }}>
+                <div className="p-2 space-y-1">
                   {[
                     { label: "Profile", icon: <FaUser size={12} />, path: "/profile" },
                     { label: "Settings", icon: <FaCog size={12} />, path: "/settings" },
                   ].map((item) => (
-                    <button key={item.path} onClick={() => { navigate(item.path); setShowProfileMenu(false); }}
-                      style={{
-                        width: "100%", display: "flex", alignItems: "center", gap: 10,
-                        padding: "9px 12px", borderRadius: 12,
-                        background: "none", border: "none", cursor: "pointer",
-                        color: "#999", fontSize: 13, transition: "background 0.2s, color 0.2s",
-                        textAlign: "left",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "white"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#999"; }}
+                    <button 
+                      key={item.path} 
+                      onClick={() => { navigate(item.path); setShowProfileMenu(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-transparent border-0 text-zinc-400 text-[13px] font-medium hover:bg-white/5 hover:text-white transition-colors text-left"
                     >
                       {item.icon} {item.label}
                     </button>
                   ))}
+                  
                   {user?.isAdmin && (
-                    <button onClick={() => { navigate("/admin"); setShowProfileMenu(false); }}
-                      style={{
-                        width: "100%", display: "flex", alignItems: "center", gap: 10,
-                        padding: "9px 12px", borderRadius: 12,
-                        background: "none", border: "none", cursor: "pointer",
-                        color: "#60a5fa", fontSize: 13, transition: "background 0.2s",
-                        textAlign: "left",
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.1)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                    <button 
+                      onClick={() => { navigate("/admin"); setShowProfileMenu(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-transparent border-0 text-blue-400 text-[13px] font-medium hover:bg-blue-500/10 transition-colors text-left"
                     >
                       <FaShieldAlt size={12} /> Admin Panel
                     </button>
                   )}
-                  <button onClick={handleLogout}
-                    style={{
-                      width: "100%", display: "flex", alignItems: "center", gap: 10,
-                      padding: "9px 12px", borderRadius: 12, marginTop: 4,
-                      background: "none", border: "none", cursor: "pointer",
-                      color: "#f87171", fontSize: 13, transition: "background 0.2s",
-                      textAlign: "left",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.1)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  
+                  <div className="h-px bg-white/5 my-1 mx-2"></div>
+                  
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-transparent border-0 text-red-400 text-[13px] font-medium hover:bg-red-500/10 transition-colors text-left"
                   >
                     <FaSignOutAlt size={12} /> Logout
                   </button>
