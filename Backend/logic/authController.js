@@ -12,6 +12,20 @@ exports.signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
+    // Basic validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Please provide all required fields" });
+    }
+
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please provide a valid email address" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    }
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });

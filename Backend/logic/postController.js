@@ -3,7 +3,16 @@ const Notification = require("../data/Notification");
 
 exports.createPost = async (req, res) => {
   try {
-    const { userId, content } = req.body;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ message: "Post content cannot be empty" });
+    }
+
+    if (content.length > 500) {
+      return res.status(400).json({ message: "Post content is too long (max 500 characters)" });
+    }
 
     let imageUrl = null;
     if (req.file) {
@@ -35,7 +44,16 @@ exports.getPosts = async (req, res) => {
 
 exports.addComment = async (req, res) => {
   try {
-    const { userId, text } = req.body;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ message: "Comment text cannot be empty" });
+    }
+
+    if (text.length > 200) {
+      return res.status(400).json({ message: "Comment text is too long (max 200 characters)" });
+    }
     const post = await Post.findById(req.params.id);
 
     if (!post) {
@@ -68,7 +86,7 @@ exports.addComment = async (req, res) => {
 
 exports.toggleLike = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user._id;
     const post = await Post.findById(req.params.id);
 
     if (!post) {
