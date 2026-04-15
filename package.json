@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "Backend/app.js",
   "scripts": {
-    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "start": "concurrently \"npm run backend\" \"npm run frontend\" \"cd Frontend && npx tailwindcss -i ./src/index.css -o ./public/tailwind.css --watch\"",
     "backend": "cd Backend && node app.js",
     "frontend": "cd Frontend && npm run dev"
   },
