@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSend, FiX, FiCornerDownLeft, FiSmile } from 'react-icons/fi';
+import API_BASE from '../api';
 
 const EMOJIS = [
   '😀','😂','🥰','😎','😭','🤔','😤','🥺','😴','🤩',
@@ -24,7 +25,7 @@ export default function Chat() {
   const emojiPickerRef = useRef(null);
 
   useEffect(() => {
-    const backendUrl = `http://${window.location.hostname}:5000`;
+    const backendUrl = API_BASE || `http://${window.location.hostname}:5000`;
     const savedName = localStorage.getItem('chatIdentifier');
 
     const newSocket = io(backendUrl, {

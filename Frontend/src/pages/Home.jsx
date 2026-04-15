@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import PostCard from "../components/PostCard";
+import API_BASE from "../api";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -38,7 +39,7 @@ export default function Home() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch("/api/posts");
+        const res = await fetch(`${API_BASE}/api/posts`);
         const data = await res.json();
         // Combining external memes and our database posts
         setPosts([...externalPosts, ...data]);

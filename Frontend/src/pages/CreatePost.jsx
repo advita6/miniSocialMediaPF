@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import API_BASE from "../api";
 
 export default function CreatePost() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function CreatePost() {
       if (user) formData.append("userId", user._id);
       if (image) formData.append("image", image);
 
-      const res = await fetch("/api/posts/create", {
+      const res = await fetch(`${API_BASE}/api/posts/create`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${user?.token || ""}`

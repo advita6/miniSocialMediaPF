@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaHeart, FaRegCommentAlt, FaTrash } from "react-icons/fa";
+import API_BASE from "../api";
 
 // Helper to show how long ago a post was made
 function timeAgo(date) {
@@ -63,7 +64,7 @@ export default function PostCard({ post, highlighted = false }) {
     if (post.isExternal) return;
 
     try {
-      await fetch(`/api/posts/${post._id}/like`, {
+      await fetch(`${API_BASE}/api/posts/${post._id}/like`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${user?.token || ""}` },
         body: JSON.stringify({ userId: user._id }),
@@ -91,7 +92,7 @@ export default function PostCard({ post, highlighted = false }) {
         return;
       }
       
-      const res = await fetch(`/api/posts/${post._id}/comment`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post._id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${u?.token || ""}` },
         body: JSON.stringify({ userId: u._id, text: commentText }),
@@ -115,7 +116,7 @@ export default function PostCard({ post, highlighted = false }) {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
       const u = JSON.parse(localStorage.getItem("user"));
-      const res = await fetch(`/api/posts/${post._id}`, {
+      const res = await fetch(`${API_BASE}/api/posts/${post._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${u?.token || ""}` },
       });

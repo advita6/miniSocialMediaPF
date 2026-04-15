@@ -5,6 +5,7 @@ import {
   FaBell, FaSignOutAlt, FaCog, FaShieldAlt,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import API_BASE from "../api";
 
 export default function Navbar() {
   const location = useLocation();
@@ -24,7 +25,7 @@ export default function Navbar() {
     if (!user) return;
     const fetch_ = async () => {
       try {
-        const res = await fetch("/api/notifications", {
+        const res = await fetch(`${API_BASE}/api/notifications`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         if (res.ok) {
@@ -47,7 +48,7 @@ export default function Navbar() {
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       try {
-        await fetch("/api/notifications/read", {
+        await fetch(`${API_BASE}/api/notifications/read`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${user.token}` },
         });

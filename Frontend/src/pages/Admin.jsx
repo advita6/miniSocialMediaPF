@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaTrash, FaBan, FaCheckCircle, FaUser } from "react-icons/fa";
+import API_BASE from "../api";
 
 export default function Admin() {
   const [users, setUsers] = useState([]);
@@ -16,7 +17,7 @@ export default function Admin() {
   const fetchAdminData = async () => {
     try {
       // Fetch users
-      const usersRes = await fetch("/api/admin/users", {
+      const usersRes = await fetch(`${API_BASE}/api/admin/users`, {
         headers: { "Authorization": `Bearer ${currentUser?.token || ""}` }
       });
       if (usersRes.ok) {
@@ -25,7 +26,7 @@ export default function Admin() {
       }
 
       // Fetch posts (using public endpoint, can also be admin specific)
-      const postsRes = await fetch("/api/posts");
+      const postsRes = await fetch(`${API_BASE}/api/posts`);
       if (postsRes.ok) {
         const postsData = await postsRes.json();
         setPosts(postsData);
@@ -39,7 +40,7 @@ export default function Admin() {
 
   const handleRestrict = async (userId) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}/restrict`, {
+      const res = await fetch(`${API_BASE}/api/admin/users/${userId}/restrict`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${currentUser?.token || ""}` }
       });
@@ -56,7 +57,7 @@ export default function Admin() {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user and all their posts?")) return;
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${currentUser?.token || ""}` }
       });
@@ -73,7 +74,7 @@ export default function Admin() {
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
-      const res = await fetch(`/api/posts/${postId}`, {
+      const res = await fetch(`${API_BASE}/api/posts/${postId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${currentUser?.token || ""}` }
       });

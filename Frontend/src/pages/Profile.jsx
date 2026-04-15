@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import PostCard from "../components/PostCard";
+import API_BASE from "../api";
 
 export default function Profile() {
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Unknown", email: "No email" };
@@ -10,7 +11,7 @@ export default function Profile() {
   useEffect(() => {
     const fetchUserPosts = async () => {
       try {
-        const res = await fetch("/api/posts");
+        const res = await fetch(`${API_BASE}/api/posts`);
         const data = await res.json();
         // Filter posts to only show current user's posts
         const userPosts = data.filter(p => p.userId && p.userId._id === user._id);

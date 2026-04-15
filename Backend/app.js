@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const http = require("http");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 const { Server } = require("socket.io");
 const chatSocketHandler = require("./chatroom/socketHandler");
 
@@ -24,15 +23,6 @@ chatSocketHandler(io);
 
 app.use(helmet());
 
-// Global Rate Limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: "Too many requests from this IP, please try again after 15 minutes"
-});
-app.use(limiter);
 
 app.use(cors({
   origin: true,
