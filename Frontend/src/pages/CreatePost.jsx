@@ -44,6 +44,9 @@ export default function CreatePost() {
 
       const res = await fetch("/api/posts/create", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${user?.token || ""}`
+        },
         body: formData
       });
 
