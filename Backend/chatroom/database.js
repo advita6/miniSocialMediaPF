@@ -44,7 +44,7 @@ function saveMessage(content, userIdentifier, replyTo, callback) {
 }
 
 function getMessageById(id, callback) {
-    db.get('SELECT * FROM messages WHERE id = ?', [id], (err, row) => {
+    db.get('SELECT *, timestamp || "Z" as timestamp FROM messages WHERE id = ?', [id], (err, row) => {
         callback(err, row);
     });
 }
@@ -52,7 +52,7 @@ function getMessageById(id, callback) {
 function getRecentMessages(callback) {
     // Get messages from the last 7 days
     const query = `
-        SELECT * FROM messages 
+        SELECT *, timestamp || "Z" as timestamp FROM messages 
         WHERE timestamp >= datetime('now', '-7 days')
         ORDER BY timestamp ASC
     `;

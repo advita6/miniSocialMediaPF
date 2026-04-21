@@ -19,12 +19,21 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState('');
   const [replyToContent, setReplyToContent] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [locationAccessed, setLocationAccessed] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
   useEffect(() => {
+    // --- Location Access Permission ---
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        () => setLocationAccessed(true),
+        () => console.log("Location access denied, using browser time.")
+      );
+    }
+
     const backendUrl = API_BASE || `http://${window.location.hostname}:5000`;
     const savedName = localStorage.getItem('chatIdentifier');
 
@@ -56,7 +65,6 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Close emoji picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
@@ -74,7 +82,6 @@ export default function Chat() {
     const end = input.selectionEnd;
     const newValue = inputValue.slice(0, start) + emoji + inputValue.slice(end);
     setInputValue(newValue);
-    // Restore cursor after emoji
     setTimeout(() => {
       input.focus();
       input.setSelectionRange(start + emoji.length, start + emoji.length);
@@ -82,7 +89,7 @@ export default function Chat() {
   };
 
   const handleSendMessage = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const content = inputValue.trim();
     if (!content) return;
 
@@ -95,6 +102,14 @@ export default function Chat() {
     setReplyToContent(null);
   };
 
+  // Mobile Enter Key Handler
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // For mobile keyboards, this ensures the message is sent
+      handleSendMessage(e);
+    }
+  };
+
   const handleReply = (msg) => {
     setReplyToContent(msg);
     document.getElementById('chat-input')?.focus();
@@ -104,17 +119,25 @@ export default function Chat() {
     setReplyToContent(null);
   };
 
+  // --- Fixed Dynamic Timezone Implementation ---
   const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    try {
+      const date = new Date(dateString);
+      // Browser automatically uses local timezone if no 'timeZone' option is specified
+      // Since we appended 'Z' in backend, it's correctly treated as UTC
+      return new Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(date);
+    } catch (e) {
+      return '...';
     }
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const getReplyContext = (replyToId) => {
     const origMsg = messages.find((m) => m.id === replyToId);
-    if (!origMsg) return { author: 'Someone', text: 'Replying to previous message...' };
+    if (!origMsg) return { author: 'Someone', text: 'Replying...' };
     const text = origMsg.content.length > 50 ? origMsg.content.substring(0, 50) + '...' : origMsg.content;
     return { author: origMsg.user_identifier, text };
   };
@@ -123,165 +146,186 @@ export default function Chat() {
     const element = document.getElementById(`msg-${id}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      element.classList.add('bg-zinc-800');
-      setTimeout(() => element.classList.remove('bg-zinc-800'), 1000);
+      element.classList.add('bg-white/10');
+      setTimeout(() => element.classList.remove('bg-white/10'), 1000);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto h-[80vh] flex flex-col glass-panel rounded-[2rem] overflow-hidden shadow-2xl relative">
-      {/* Background glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none"></div>
-
-      {/* Header */}
-      <div className="bg-white/5 backdrop-blur-md border-b border-white/10 p-4 flex justify-between items-center relative z-10">
-        <div>
-          <h2 className="text-2xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent tracking-tight">Global Chat</h2>
-          <p className="text-[12px] text-zinc-400 font-medium">Anonymous Messaging</p>
-        </div>
-        <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-white/5 shadow-inner">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-          <span className="text-[13px] font-bold text-zinc-300">You are: <span className="text-white">{myIdentifier || 'Connecting...'}</span></span>
-        </div>
+    <div className="app-container h-screen flex flex-col overflow-hidden">
+      <div className="liquid-bg-wrapper opacity-40 fixed inset-0 z-0">
+        <div className="liquid-bg-image" />
+        <div className="liquid-overlay" />
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => {
-          const isSelf = msg.user_identifier === myIdentifier;
-          return (
-            <motion.div 
-              key={msg.id}
-              id={`msg-${msg.id}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'} transition-colors duration-500 rounded-xl p-1`}
-            >
-              <div className="flex items-center gap-2 mb-1 px-1">
-                <span className={`text-xs font-semibold ${isSelf ? 'text-indigo-400' : 'text-zinc-400'}`}>
-                  {isSelf ? 'You' : msg.user_identifier}
-                </span>
-                <span className="text-[10px] text-zinc-500">{formatTime(msg.timestamp)}</span>
-              </div>
-              
-              <div className={`group relative max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${
-                isSelf ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-zinc-800 text-zinc-200 rounded-tl-sm'
-              }`}>
-                {/* Reply Quote Block */}
-                {msg.reply_to && (
-                  <div 
-                    onClick={() => scrollToMessage(msg.reply_to)}
-                    className="mb-2 cursor-pointer bg-zinc-950/30 border-l-2 border-indigo-400 rounded p-2 text-xs hover:bg-zinc-950/50 transition-colors"
+      <div className="relative z-10 flex-1 w-full max-w-[1600px] mx-auto flex flex-col glass-obsidian sm:rounded-[3rem] shadow-3xl border-white/5 overflow-hidden sm:my-4">
+        
+        {/* Immersive Header */}
+        <div className="p-6 sm:p-10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-white/5 bg-black/40 backdrop-blur-3xl">
+          <div>
+            <h2 className="text-4xl sm:text-6xl font-black italic tracking-tighter font-chaotic uppercase leading-none">
+              THE <span className="amber-text">VOID.</span>
+            </h2>
+            <p className="text-[10px] text-zinc-500 font-black tracking-[0.4em] uppercase mt-2">
+              Encrypted Gossip Stream // {locationAccessed ? "Location Verified" : "Syncing Time..."}
+            </p>
+          </div>
+          
+          <motion.div 
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-full border border-white/5 mt-4 sm:mt-0 shadow-inner"
+          >
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] text-zinc-600 font-black uppercase tracking-widest">Active Alias</span>
+              <span className="text-white font-black text-xs uppercase tracking-tight">{myIdentifier || 'SYNCING...'}</span>
+            </div>
+            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_15px_rgba(255,140,0,0.8)]"></div>
+          </motion.div>
+        </div>
+
+        {/* Dynamic Messages Feed */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-10 py-8 space-y-8 obsidian-scrollbar relative">
+          <div className="text-center pb-12">
+            <p className="text-[9px] text-zinc-700 font-black tracking-[0.6em] uppercase">--- TRANSMISSION INJECTED ---</p>
+          </div>
+
+          {messages.map((msg) => {
+            const isSelf = msg.user_identifier === myIdentifier;
+            return (
+              <motion.div 
+                key={msg.id}
+                id={`msg-${msg.id}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'} group`}
+              >
+                <div className={`flex items-center gap-3 mb-2 px-1 ${isSelf ? 'flex-row-reverse' : ''}`}>
+                  <span className={`text-[10px] font-black tracking-widest uppercase ${isSelf ? 'text-amber-500' : 'text-zinc-500'}`}>
+                    {isSelf ? 'YOU' : msg.user_identifier}
+                  </span>
+                  <span className="text-[9px] text-zinc-700 font-black">{formatTime(msg.timestamp)}</span>
+                </div>
+                
+                <div className={`relative max-w-[85%] sm:max-w-[70%] rounded-3xl px-6 py-4 shadow-3xl border transition-all duration-300 ${
+                  isSelf 
+                    ? 'bg-white text-black border-white rounded-tr-none' 
+                    : 'bg-zinc-900 text-zinc-100 border-white/5 rounded-tl-none hover:border-amber-500/30'
+                }`}>
+                  {msg.reply_to && (
+                    <div 
+                      onClick={() => scrollToMessage(msg.reply_to)}
+                      className={`mb-3 cursor-pointer border-l-2 p-3 rounded-2xl text-[11px] font-medium leading-snug ${
+                        isSelf ? 'bg-black/5 border-black/20 text-black/60' : 'bg-white/5 border-amber-500 text-zinc-500'
+                      }`}
+                    >
+                      <div className={`font-black uppercase tracking-tighter mb-1 ${isSelf ? 'text-black' : 'text-amber-500'}`}>
+                        {getReplyContext(msg.reply_to).author}
+                      </div>
+                      <div className="line-clamp-2 italic">"{getReplyContext(msg.reply_to).text}"</div>
+                    </div>
+                  )}
+                  
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed font-bold break-words whitespace-pre-wrap">{msg.content}</p>
+                  
+                  <button
+                    type="button"
+                    onClick={() => handleReply(msg)}
+                    className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all p-2.5 rounded-full border shadow-2xl bg-black text-white border-white/10 hover:bg-amber-500 hover:text-black ${
+                      isSelf ? '-left-14' : '-right-14'
+                    }`}
                   >
-                    <div className="font-semibold text-indigo-300 mb-0.5">{getReplyContext(msg.reply_to).author}</div>
-                    <div className="text-zinc-300 opacity-90 line-clamp-2">{getReplyContext(msg.reply_to).text}</div>
-                  </div>
-                )}
-                
-                <p className="break-words leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                
-                {/* Reply Button (Hover) */}
+                    <FiCornerDownLeft size={16} />
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Control Center */}
+        <div className="p-4 sm:p-10 bg-black/60 border-t border-white/5 backdrop-blur-3xl pb-24 sm:pb-10">
+          <AnimatePresence>
+            {replyToContent && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mb-6 flex items-center justify-between text-[11px] bg-white/5 rounded-3xl p-5 border border-white/10"
+              >
+                <div className="flex items-center gap-3 text-zinc-400 truncate pr-6">
+                  <FiCornerDownLeft className="text-amber-500 flex-shrink-0" />
+                  <span className="font-black uppercase text-amber-500 tracking-tighter">{replyToContent.user_identifier}:</span>
+                  <span className="truncate italic">"{replyToContent.content}"</span>
+                </div>
+                <button onClick={cancelReply} className="text-zinc-500 hover:text-white p-2">
+                  <FiX size={18} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleSendMessage} className="flex gap-4 relative">
+            <div className="flex-1 relative">
+              <input
+                id="chat-input"
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="UNFILTERED CHAOS..."
+                className="w-full bg-zinc-950 border border-white/10 rounded-2xl sm:rounded-3xl px-6 py-4 pr-14 focus:outline-none focus:border-amber-500 transition-all text-[14px] sm:text-[15px] font-black tracking-tight text-white placeholder-zinc-800"
+                autoComplete="off"
+              />
+              <div ref={emojiPickerRef} className="absolute right-3 top-1/2 -translate-y-1/2">
                 <button
                   type="button"
-                  onClick={() => handleReply(msg)}
-                  className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-600 ${
-                    isSelf ? '-left-10' : '-right-10'
+                  onClick={() => setShowEmojiPicker(prev => !prev)}
+                  className={`p-2 rounded-xl transition-all ${
+                    showEmojiPicker ? 'text-amber-500 scale-125' : 'text-zinc-700 hover:text-zinc-400'
                   }`}
-                  title="Reply"
                 >
-                  <FiCornerDownLeft size={14} />
+                  <FiSmile size={26} />
                 </button>
+
+                <AnimatePresence>
+                  {showEmojiPicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      className="absolute bottom-16 right-0 z-50 glass-obsidian border border-white/10 rounded-[2rem] p-5 shadow-[0_30px_100px_rgba(0,0,0,1)] w-80 sm:w-96"
+                    >
+                      <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.4em] mb-4">Encryption Keys</p>
+                      <div className="grid grid-cols-8 gap-2">
+                        {EMOJIS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => handleEmojiClick(emoji)}
+                            className="text-2xl p-2 rounded-2xl hover:bg-white/10 transition-all hover:scale-125"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            </motion.div>
-          );
-        })}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div className="bg-zinc-800 border-t border-zinc-700 p-4">
-        {/* Reply Context Banner */}
-        {replyToContent && (
-          <div className="mb-2 flex items-center justify-between text-xs bg-zinc-700/50 rounded-lg p-2 border border-zinc-600/50">
-            <div className="flex items-center gap-2 text-zinc-300 truncate pr-4">
-              <FiCornerDownLeft className="text-indigo-400 flex-shrink-0" />
-              <span className="font-semibold">{replyToContent.user_identifier}:</span>
-              <span className="truncate">{replyToContent.content}</span>
             </div>
-            <button 
-              onClick={cancelReply}
-              className="text-zinc-400 hover:text-white p-1 rounded-full hover:bg-zinc-600 transition-colors"
-            >
-              <FiX size={14} />
-            </button>
-          </div>
-        )}
 
-        <form onSubmit={handleSendMessage} className="flex gap-2 relative">
-          <input
-            id="chat-input"
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-sm"
-            autoComplete="off"
-          />
-
-          {/* Emoji Button */}
-          <div ref={emojiPickerRef} className="relative flex items-center">
             <button
-              type="button"
-              onClick={() => setShowEmojiPicker(prev => !prev)}
-              className={`p-3 rounded-xl border transition-all ${
-                showEmojiPicker
-                  ? 'bg-indigo-600 border-indigo-500 text-white'
-                  : 'bg-zinc-950 border-zinc-700 text-zinc-400 hover:text-white hover:border-indigo-500'
-              }`}
-              title="Emoji"
+              type="submit"
+              disabled={!inputValue.trim()}
+              className="bg-white hover:bg-amber-500 text-black disabled:bg-zinc-900 disabled:text-zinc-700 rounded-2xl sm:rounded-3xl px-8 sm:px-12 py-4 font-black text-xs uppercase tracking-widest transition-all shadow-2xl"
             >
-              <FiSmile size={18} />
+              INJECT
             </button>
-
-            {/* Emoji Picker Panel */}
-            <AnimatePresence>
-              {showEmojiPicker && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute bottom-14 right-0 z-50 bg-zinc-900 border border-zinc-700 rounded-2xl p-3 shadow-2xl w-64"
-                >
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 px-1">Emojis</p>
-                  <div className="grid grid-cols-10 gap-0.5">
-                    {EMOJIS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => handleEmojiClick(emoji)}
-                        className="text-xl p-1 rounded-lg hover:bg-zinc-700 transition-colors leading-none"
-                        title={emoji}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <button
-            type="submit"
-            disabled={!inputValue.trim()}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-xl px-6 py-3 font-medium flex items-center justify-center gap-2 transition-all"
-          >
-            <span className="hidden sm:inline">Send</span>
-            <FiSend />
-          </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
