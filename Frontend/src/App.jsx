@@ -85,7 +85,7 @@ function AppContent() {
 }
 
 export default function App() {
-  const GOOGLE_CLIENT_ID = "1041925345638-q5m3i1r6k5l0e6o0e6o0e6o0e6o0e6o.apps.googleusercontent.com";
+  const GOOGLE_CLIENT_ID = "770420547009-3hbibuo9dp6jeh96l2qgs431kfbmb05t.apps.googleusercontent.com";
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
