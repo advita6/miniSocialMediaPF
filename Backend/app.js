@@ -41,6 +41,7 @@ const authRoutes = require("./api/authRoutes");
 const postRoutes = require("./api/postRoutes");
 const adminRoutes = require("./api/adminRoutes");
 const notificationRoutes = require("./api/notificationRoutes");
+const userRoutes = require("./api/userRoutes");
 
 const runServer = async () => {
   // Connect to MongoDB
@@ -51,6 +52,7 @@ const runServer = async () => {
   app.use("/api/posts", postRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/notifications", notificationRoutes);
+  app.use("/api/users", userRoutes);
 
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
