@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import Navbar from "./components/Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
@@ -55,21 +56,16 @@ function AppContent() {
   const isAuthenticated = !!localStorage.getItem("user");
 
   useEffect(() => {
-    // Check for light mode preference
     if (localStorage.getItem("theme") === "light") {
       document.documentElement.classList.add("light-mode");
     }
   }, []);
 
   return (
-    <div className="min-h-screen text-zinc-100 flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen text-zinc-100 flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
       <ScrollToTop />
-
-      {/* Show Navbar only when logged in */}
       {isAuthenticated && <Navbar />}
-
-      {/* Main page content area */}
-      <div className={isAuthenticated ? "pt-[80px] pb-[100px]" : "py-6"}>
+      <div className={isAuthenticated ? "pt-[80px] pb-[100px]" : "py-0"}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<ProtectedRoute><AnimatedPage><Home /></AnimatedPage></ProtectedRoute>} />
@@ -89,9 +85,13 @@ function AppContent() {
 }
 
 export default function App() {
+  const GOOGLE_CLIENT_ID = "1041925345638-q5m3i1r6k5l0e6o0e6o0e6o0e6o0e6o.apps.googleusercontent.com";
+
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
