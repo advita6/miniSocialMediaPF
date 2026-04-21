@@ -1,110 +1,118 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
+import { FaGoogle } from "react-icons/fa";
+import AuthLayout from "../components/AuthLayout";
 import API_BASE from "../api";
 
 export default function Login() {
-  const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    setError("");
-
-    if (!email || !password) {
-      setError("All fields are required");
-      return;
-    }
-
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setLoading(true);
-
+    setError("");
     try {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Login failed");
-        setLoading(false);
-        return;
+      if (res.ok) {
+        localStorage.setItem("user", JSON.stringify(data));
+        navigate("/");
+      } else {
+        setError(data.message || "Invalid credentials");
       }
-
-      localStorage.setItem("user", JSON.stringify(data));
-      navigate("/");
     } catch (err) {
-      setError("Server error. Is the backend running?");
+      setError("Server error. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Google Login Implementation ---
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      try {
+        // We send the access token to our backend to verify and get user data
+        // Alternatively, use 'id_token' if using the 'implicit' flow or 'code' for 'auth-code' flow
+        // For @react-oauth/google, we usually get an access_token. 
+        // Our backend expects a tokenId (ID Token). 
+        // To get an ID Token, we need to use a different login method or fetch user info.
+        
+        // Let's use the fetch approach to get user info or use a simpler Google Auth approach.
+        // For simplicity, let's assume the backend verifies the access_token or we use the Google Identity Services directly.
+        
+        const res = await fetch(`${API_BASE}/api/auth/google`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tokenId: tokenResponse.access_token, isAccessToken: true }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem("user", JSON.stringify(data));
+          navigate("/");
+        } else {
+          setError(data.message || "Google Login failed");
+        }
+      } catch (err) {
+        setError("Google Auth Server error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError("Google Login Failed"),
+  });
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black">
-
-      <div className="bg-zinc-900 p-8 rounded-2xl w-full max-w-sm shadow-xl border border-zinc-800">
-
-        <h2 className="text-2xl font-semibold text-center mb-6">
-          Welcome Back 👋
-        </h2>
-
-        {/* Email */}
-        <div className="mb-4">
+    <AuthLayout>
+      <form onSubmit={handleLogin}>
+        <div className="chaotic-field">
+          <label className="chaotic-label">Identity (Email)</label>
           <input
             type="email"
-            placeholder="Email"
-            className="w-full p-3 bg-black border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 transition"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="chaotic-input"
+            placeholder="YOU@CHAOS.COM"
+            required
           />
         </div>
 
-        {/* Password */}
-        <div className="mb-4 relative">
+        <div className="chaotic-field">
+          <label className="chaotic-label">Encryption Key (Password)</label>
           <input
-            type={show ? "text" : "password"}
-            placeholder="Password"
-            className="w-full p-3 bg-black border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 transition"
+            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="chaotic-input"
+            placeholder="••••••••"
+            required
           />
-
-          <span
-            onClick={() => setShow(!show)}
-            className="absolute right-3 top-3 cursor-pointer text-sm text-zinc-400"
-          >
-            {show ? "Hide" : "Show"}
-          </span>
         </div>
 
-        {/* Error */}
-        {error && (
-          <p className="text-red-500 text-sm mb-3">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-xs font-black mb-4 uppercase">{error}</p>}
 
-        {/* Button */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className="w-full bg-blue-600 py-3 rounded-lg hover:bg-blue-500 transition flex justify-center disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Login"}
+        <button type="submit" disabled={loading} className="chaotic-submit">
+          {loading ? "Decrypting..." : "Enter Void"}
         </button>
 
-        {/* Footer */}
-        <p className="text-sm text-center mt-4 text-zinc-400">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-400 hover:underline cursor-pointer">
-            Sign up
-          </Link>
-        </p>
-      </div>
-    </div>
+        <button 
+          type="button" 
+          onClick={() => googleLogin()}
+          className="google-btn"
+        >
+          <FaGoogle size={14} />
+          Sign in with Google
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
