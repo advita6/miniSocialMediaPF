@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import PostCard from "../components/PostCard";
 
 export default function Explore() {
@@ -10,7 +11,7 @@ export default function Explore() {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch("https://meme-api.com/gimme/9");
+      const res = await fetch("https://meme-api.com/gimme/12");
       const data = await res.json();
       const mapped = data.memes.map((item, index) => ({
         _id: `explore-${index}-${Date.now()}`,
@@ -34,54 +35,66 @@ export default function Explore() {
   useEffect(() => { fetchMemes(); }, []);
 
   return (
-    <div className="px-4 py-2 max-w-7xl mx-auto">
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8 px-2">
-        <div>
-          <h1 className="text-3xl font-extrabold m-0 tracking-tight bg-gradient-to-r from-orange-400 to-rose-500 bg-clip-text text-transparent">
-            Explore
-          </h1>
-          <p className="text-[14px] text-zinc-400 mt-1 font-medium">
-            Trending posts from across the internet
-          </p>
-        </div>
-        <button
-          onClick={fetchMemes}
-          disabled={loading}
-          className="bg-zinc-800/80 backdrop-blur-md border border-white/10 hover:border-white/20 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          {loading ? "Loading…" : "↻ Refresh"}
-        </button>
+    <div className="app-container pt-24 pb-32">
+      {/* Background Liquid Layer */}
+      <div className="liquid-bg-wrapper opacity-40 fixed inset-0 z-0">
+        <div className="liquid-bg-image" />
+        <div className="liquid-overlay" />
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="flex justify-center pt-20">
-          <div className="w-10 h-10 border-4 border-white/10 border-t-rose-500 rounded-full animate-spin" />
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-16 px-2 gap-6">
+          <div>
+            <motion.h1 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-5xl sm:text-7xl font-black uppercase tracking-tighter m-0"
+            >
+              MEME <span className="amber-text">SCAN.</span>
+            </motion.h1>
+            <p className="text-zinc-500 font-black tracking-[0.4em] text-[10px] uppercase mt-3">
+              Cross Internet Dump
+            </p>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={fetchMemes}
+            disabled={loading}
+            className="bg-amber-500 hover:bg-white text-black font-black text-xs uppercase tracking-widest px-10 py-5 rounded-3xl transition-all shadow-2xl disabled:opacity-50"
+          >
+            {loading ? "SCANNING…" : "REFRESH DUMP"}
+          </motion.button>
         </div>
-      )}
 
-      {/* Error state */}
-      {!loading && error && (
-        <div className="flex flex-col items-center pt-20 space-y-4">
-          <div className="text-5xl opacity-50">💔</div>
-          <p className="text-zinc-500 font-medium text-sm">
-            Could not load posts. Check your connection.
-          </p>
-        </div>
-      )}
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center pt-20 space-y-6">
+            <div className="w-12 h-12 border-4 border-white/5 border-t-amber-500 rounded-full animate-spin" />
+            <p className="text-zinc-600 font-black tracking-widest text-[9px] uppercase animate-pulse">Synchronizing dump...</p>
+          </div>
+        )}
 
-      {/* Masonry grid */}
-      {!loading && !error && (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
-          {posts.map((p) => (
-            <div key={p._id} className="break-inside-avoid">
-              <PostCard post={p} />
-            </div>
-          ))}
-        </div>
-      )}
+        {/* Error state */}
+        {!loading && error && (
+          <div className="flex flex-col items-center pt-20 space-y-4">
+            <p className="text-zinc-500 font-black tracking-widest text-xs uppercase">
+              The void is unreachable. Retry later.
+            </p>
+          </div>
+        )}
+
+        {/* Masonry grid */}
+        {!loading && !error && (
+          <div className="columns-1 md:columns-2 xl:columns-3 gap-8">
+            {posts.map((p) => (
+              <div key={p._id} className="break-inside-avoid">
+                <PostCard post={p} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

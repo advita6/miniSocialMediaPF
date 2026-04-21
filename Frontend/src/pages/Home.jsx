@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import PostCard from "../components/PostCard";
 import API_BASE from "../api";
 
@@ -11,11 +12,10 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const scrolledRef = useRef(false);
 
-  // Get some memes from external api to show on home page
   useEffect(() => {
     const fetchExternal = async () => {
       try {
-        const res = await fetch("https://meme-api.com/gimme/3");
+        const res = await fetch("https://meme-api.com/gimme/5");
         const data = await res.json();
         const mapped = data.memes.map((item, index) => ({
           _id: `external-${index}-${Date.now()}`,
@@ -35,13 +35,11 @@ export default function Home() {
     fetchExternal();
   }, []);
 
-  // Get user posts from our backend and mix them with memes
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/posts`);
         const data = await res.json();
-        // Combining external memes and our database posts
         setPosts([...externalPosts, ...data]);
       } catch (err) {
         console.error("error fetching posts:", err);
@@ -50,12 +48,10 @@ export default function Home() {
       }
     };
     fetchPosts();
-    // Refresh the feed every 10 seconds
-    const interval = setInterval(fetchPosts, 10000);
+    const interval = setInterval(fetchPosts, 15000);
     return () => clearInterval(interval);
   }, [externalPosts]);
 
-  // If we came from a notification, scroll to that specific post
   useEffect(() => {
     const targetPostId = searchParams.get("post");
     if (!targetPostId || loading || scrolledRef.current) return;
@@ -70,30 +66,52 @@ export default function Home() {
   }, [posts, loading, searchParams, setSearchParams]);
 
   return (
-    <div className="px-4 py-2 max-w-7xl mx-auto">
-      {loading && (
-        <div className="flex flex-col items-center pt-24 space-y-4">
-          <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin"></div>
-          <p className="text-zinc-500 font-medium text-sm animate-pulse">
-            Curating your feed...
-          </p>
-        </div>
-      )}
-      {!loading && posts.length === 0 && (
-        <div className="flex flex-col items-center pt-24 space-y-4">
-          <div className="text-6xl opacity-50">🪴</div>
-          <p className="text-zinc-500 font-medium text-sm">
-            Nothing to see here yet! Try following some users.
-          </p>
-        </div>
-      )}
+    <div className="app-container pt-24 pb-32">
+      {/* Background Liquid Layer */}
+      <div className="liquid-bg-wrapper opacity-50 fixed inset-0 z-0">
+        <div className="liquid-bg-image" />
+        <div className="liquid-overlay" />
+      </div>
 
-      <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
-        {posts.map((p) => (
-          <div key={p._id} className="break-inside-avoid">
-            <PostCard post={p} highlighted={highlightedPostId === p._id} />
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6">
+        {/* Editorial Heading */}
+        <div className="mb-12">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-6xl sm:text-8xl font-black uppercase tracking-tighter"
+          >
+            THE <span className="amber-text">CURRENT.</span>
+          </motion.h2>
+          <p className="text-zinc-500 font-black tracking-widest text-xs uppercase mt-2">
+            Transmission Feed // Unfiltered Chaos
+          </p>
+        </div>
+
+        {loading && (
+          <div className="flex flex-col items-center pt-24 space-y-6">
+            <div className="w-16 h-16 border-4 border-white/5 border-t-amber-500 rounded-full animate-spin"></div>
+            <p className="text-zinc-600 font-black tracking-[0.3em] text-[10px] uppercase animate-pulse">
+              SYNCING WITH THE VOID...
+            </p>
           </div>
-        ))}
+        )}
+
+        {!loading && posts.length === 0 && (
+          <div className="flex flex-col items-center pt-24 space-y-4">
+            <p className="text-zinc-600 font-black tracking-widest text-xs uppercase">
+              The hunt is quiet. Too quiet.
+            </p>
+          </div>
+        )}
+
+        <div className="columns-1 md:columns-2 xl:columns-3 gap-8">
+          {posts.map((p) => (
+            <div key={p._id} className="break-inside-avoid">
+              <PostCard post={p} highlighted={highlightedPostId === p._id} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
